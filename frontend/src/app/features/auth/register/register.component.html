@@ -1,0 +1,35 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8">
+    <div>
+      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        Crear cuenta
+      </h2>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="mt-8 space-y-6">
+      <div class="rounded-md shadow-sm space-y-4">
+        <div>
+          <label for="name" class="block text-sm font-medium text-gray-700">Nombre</label>
+          <input id="name" type="text" formControlName="name" class="form-input mt-1" placeholder="Tu nombre" />
+        </div>
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+          <input id="email" type="email" formControlName="email" class="form-input mt-1" placeholder="tu@email.com" />
+        </div>
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+          <input id="password" type="password" formControlName="password" class="form-input mt-1" placeholder="••••••••" />
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="registerForm.invalid" class="btn-primary w-full justify-center">
+        Registrarse
+      </button>
+
+      <p class="text-center text-sm text-gray-600">
+        ¿Ya tenés cuenta?
+        <a routerLink="/auth/login" class="font-medium text-blue-600 hover:text-blue-500">Iniciá sesión</a>
+      </p>
+    </form>
+  </div>
+</div>

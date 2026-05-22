@@ -1,0 +1,20 @@
+<div class="p-6">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Mis vehículos</h1>
+    <button class="btn-primary">+ Agregar vehículo</button>
+  </div>
+
+  <div *ngIf="vehicles.length === 0" class="card text-center text-gray-500">
+    Todavía no tenés vehículos registrados.
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div *ngFor="let vehicle of vehicles" class="card hover:shadow-md transition-shadow">
+      <p class="font-semibold text-gray-900">{{ vehicle.brand }} {{ vehicle.model }}</p>
+      <p class="text-sm text-gray-500 mt-1">{{ vehicle.year }} · {{ vehicle.plate }}</p>
+      <a [routerLink]="[vehicle.id]" class="mt-3 text-blue-600 text-sm hover:underline block">
+        Ver detalle →
+      </a>
+    </div>
+  </div>
+</div>

@@ -48,8 +48,8 @@ CREATE DATABASE mycar_db;
 Crear el archivo de configuración local (no se versiona):
 
 ```bash
-# En src/main/resources/
-cp application.properties application-local.properties
+# En backend/src/main/resources/
+cp backend/src/main/resources/application.properties backend/src/main/resources/application-local.properties
 ```
 
 Editar `application-local.properties` con tus credenciales:
@@ -64,6 +64,8 @@ spring.jpa.hibernate.ddl-auto=update
 ### 3. Compilar y ejecutar
 
 ```bash
+cd backend
+
 # Con Maven wrapper (recomendado)
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 
@@ -97,7 +99,7 @@ ng serve
 
 La app quedará disponible en: `http://localhost:4200`
 
-> El frontend está preconfigurado para apuntar al backend en `http://localhost:8080`.
+> El frontend está preconfigurado para apuntar al backend en `http://localhost:8080` (`src/environments/environment.ts`).
 
 ---
 
@@ -149,14 +151,31 @@ chore:    tareas de build, configuración
 
 ```
 MyCar/
-├── src/                        # Backend Spring Boot
-│   ├── main/
-│   │   ├── java/               # Código fuente Java
-│   │   └── resources/          # Configuración (application.properties)
-│   └── test/                   # Tests unitarios e integración
-├── frontend/                   # App Angular (a agregar)
+├── backend/                        # Spring Boot (Maven)
+│   ├── src/
+│   │   ├── main/java/              # Código fuente Java
+│   │   └── main/resources/        # application.properties
+│   └── pom.xml
+├── frontend/                       # Angular 19
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── core/
+│   │   │   │   ├── guards/         # authGuard
+│   │   │   │   ├── interceptors/   # authInterceptor (JWT)
+│   │   │   │   └── services/       # AuthService
+│   │   │   ├── features/
+│   │   │   │   ├── auth/           # login, register (lazy-loaded)
+│   │   │   │   ├── dashboard/      # dashboard (lazy-loaded)
+│   │   │   │   ├── vehicles/       # lista y detalle (lazy-loaded)
+│   │   │   │   └── expenses/       # lista de gastos (lazy-loaded)
+│   │   │   ├── app.config.ts       # HttpClient + interceptor + router
+│   │   │   └── app.routes.ts       # Rutas principales con lazy loading
+│   │   ├── environments/
+│   │   │   └── environment.ts      # apiUrl → localhost:8080
+│   │   └── styles.css              # Tailwind CSS
+│   ├── tailwind.config.js
+│   └── package.json
 ├── .gitignore
-├── pom.xml
 └── README.md
 ```
 
