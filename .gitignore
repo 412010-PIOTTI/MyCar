@@ -1,10 +1,70 @@
+# ===========================
+# JAVA / MAVEN / SPRING BOOT
+# ===========================
 HELP.md
 target/
-.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+hs_err_pid*
+replay_pid*
+
+# Maven wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Spring Boot
+spring-boot-*.log
+application-local.properties
+application-local.yml
+*.env
+
+# ===========================
+# ANGULAR / NODE
+# ===========================
+# Dependencies
+frontend/node_modules/
+node_modules/
+
+# Build output
+frontend/dist/
+frontend/.angular/cache/
+dist/
+
+# Angular cache
+.angular/
+
+# Environment files (contienen secrets)
+frontend/src/environments/environment.local.ts
+frontend/src/environments/environment.prod.ts
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Package lock (elegir uno solo: npm o yarn)
+# yarn.lock
+
+# ===========================
+# IDEs Y EDITORES
+# ===========================
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### Eclipse / STS ###
 .apt_generated
 .classpath
 .factorypath
@@ -12,12 +72,6 @@ target/
 .settings
 .springBeans
 .sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
 
 ### NetBeans ###
 /nbproject/private/
@@ -31,3 +85,29 @@ build/
 
 ### VS Code ###
 .vscode/
+!.vscode/extensions.json
+
+### macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+
+### Windows ###
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ===========================
+# SEGURIDAD - NUNCA COMMITEAR
+# ===========================
+*.p12
+*.jks
+*.pem
+*.key
+*.crt
+secrets.yml
+secrets.properties
+.env
+.env.*
+!.env.example
