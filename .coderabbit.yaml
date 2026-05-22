@@ -1,0 +1,54 @@
+# ============================================================
+# CODERABBIT — Configuración de revisión IA en PRs
+# Documentación: https://docs.coderabbit.ai
+#
+# SETUP (una sola vez):
+# 1. Ir a https://coderabbit.ai → Login con GitHub
+# 2. Instalar la GitHub App en tu repo mycar
+# 3. Este archivo se detecta automáticamente
+# ============================================================
+
+language: "es-419"  # Respuestas en español latinoamericano
+
+reviews:
+  # Perfil de revisión: coderabbit | assertive | minimalist
+  profile: "assertive"
+
+  # Pedir resumen del PR en el primer comentario
+  request_changes_workflow: true
+
+  # Revisar archivos de test también
+  auto_review:
+    enabled: true
+    drafts: false  # No revisar drafts automáticamente
+    base_branches:
+      - master
+      - develop
+
+  # Qué tipos de issues reportar
+  path_instructions:
+    - path: "backend/**"
+      instructions: |
+        Revisar con foco en:
+        - Seguridad: inyección SQL, validaciones de input, manejo de JWT
+        - Patrones Spring Boot: uso correcto de @Transactional, manejo de excepciones con @ControllerAdvice
+        - No exponer entidades directamente en los controllers (usar DTOs)
+        - Nomenclatura en español para entidades de dominio, inglés para código
+
+    - path: "frontend/**"
+      instructions: |
+        Revisar con foco en:
+        - No hardcodear URLs de API (usar environment.ts)
+        - Manejo de Observables: evitar subscriptions sin unsubscribe
+        - No guardar JWT en localStorage (usar httpOnly cookies o memoria)
+        - Componentes con responsabilidad única
+
+    - path: "**/*.yml"
+      instructions: |
+        Revisar que no haya secretos hardcodeados.
+        Verificar que los secrets se referencien via ${{ secrets.NOMBRE }}.
+
+# Chat: podés hablarle a CodeRabbit en los comentarios del PR
+# con @coderabbitai resume, @coderabbitai review, etc.
+chat:
+  auto_reply: true

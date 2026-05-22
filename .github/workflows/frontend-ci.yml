@@ -1,0 +1,83 @@
+# ============================================================
+# FRONTEND CI — Angular 19 + Node 20
+# Install → Lint → Build producción → Audit deps
+# ============================================================
+name: ⚡ Frontend CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - 'feature/**'
+      - 'release/**'
+      - 'hotfix/**'
+      - 'bugfix/**'
+      - 'support/**'
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'frontend/**'
+
+jobs:
+  build-and-lint:
+    name: Lint, Build y Audit
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend  # Todos los comandos corren desde /frontend
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # ── 2. Node 20 ─────────────────────────────────────────
+      - name: Configurar Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # ── 3. Instalar dependencias ───────────────────────────
+      # npm ci es más rápido y reproducible que npm install en CI
+      - name: Instalar dependencias (npm ci)
+        run: npm ci
+
+      # ── 4. Lint (ESLint + Angular style guide) ─────────────
+      - name: Ejecutar ESLint
+        run: npm run lint
+        # Requiere que tengas en package.json:
+        # "scripts": { "lint": "ng lint" }
+
+      # ── 5. Build de producción ─────────────────────────────
+      # Si el build de prod rompe, lo sabés antes de hacer merge
+      - name: Build producción
+        run: npm run build -- --configuration=production
+        env:
+          # Variables de entorno del frontend (sin claves sensibles en frontend)
+          # Si usás environment.ts, estas se inyectan en build time
+          NG_APP_API_URL: ${{ secrets.NG_APP_API_URL }}
+
+      # ── 6. Audit de vulnerabilidades npm ──────────────────
+      - name: npm audit (vulnerabilidades)
+        run: npm audit --audit-level=high
+        # --audit-level=high → solo falla en severidad alta o crítica
+        # Cambiarlo a 'moderate' cuando el proyecto madure
+        continue-on-error: true  # No bloquea mientras se desarrolla
+
+      # ── 7. Subir build como artifact ──────────────────────
+      - name: Subir dist como artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 3

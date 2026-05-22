@@ -1,0 +1,114 @@
+# ============================================================
+# BACKEND CI — Java 17 + Spring Boot + Maven
+# Compile → Test → Checkstyle → OWASP Dependency Check
+# ============================================================
+name: ☕ Backend CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - 'feature/**'
+      - 'release/**'
+      - 'hotfix/**'
+      - 'bugfix/**'
+      - 'support/**'
+    paths:
+      - 'backend/**'
+      - 'pom.xml'
+      - '.mvn/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'backend/**'
+      - 'pom.xml'
+      - '.mvn/**'
+
+jobs:
+  build-and-test:
+    name: Compilar, Testear y Analizar
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # ── 2. Java 17 ─────────────────────────────────────────
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'  # Eclipse Temurin (ex-AdoptOpenJDK)
+
+      # ── 3. Cache Maven (~/.m2) ─────────────────────────────
+      # Evita bajar todas las dependencias en cada run
+      - name: Cache dependencias Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # ── 4. Compile ─────────────────────────────────────────
+      - name: Compilar proyecto
+        run: mvn compile --no-transfer-progress
+        env:
+          # Las claves NUNCA van hardcodeadas. Se configuran en
+          # GitHub → Settings → Secrets and variables → Actions
+          SPRING_DATASOURCE_URL: ${{ secrets.DB_URL }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+
+      # ── 5. Tests (JUnit 5) ─────────────────────────────────
+      - name: Ejecutar tests
+        run: mvn test --no-transfer-progress
+        env:
+          SPRING_DATASOURCE_URL: ${{ secrets.DB_URL }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+
+      # ── 6. Reportes de test ────────────────────────────────
+      - name: Publicar resultados de tests
+        uses: dorny/test-reporter@v1
+        if: always()  # Mostrar reporte incluso si los tests fallan
+        with:
+          name: Resultados JUnit
+          path: '**/target/surefire-reports/TEST-*.xml'
+          reporter: java-junit
+
+      # ── 7. Checkstyle (Google Java Style) ─────────────────
+      - name: Ejecutar Checkstyle
+        run: mvn checkstyle:check --no-transfer-progress
+        continue-on-error: false  # Falla si hay violaciones de estilo
+
+      # ── 8. OWASP Dependency Check (vulnerabilidades CVE) ──
+      - name: OWASP Dependency Check
+        run: |
+          mvn org.owasp:dependency-check-maven:check \
+            --no-transfer-progress \
+            -DfailBuildOnCVSS=7 \
+            -DsuppressionFile=.github/owasp-suppressions.xml \
+            || true
+        # failBuildOnCVSS=7 → falla si hay CVE con score >= 7 (alto/crítico)
+        # || true → no bloquea el build, solo reporta (cambiarlo cuando el proyecto madure)
+
+      # ── 9. Subir reporte OWASP como artifact ──────────────
+      - name: Subir reporte OWASP
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owasp-report
+          path: target/dependency-check-report.html
+          retention-days: 7

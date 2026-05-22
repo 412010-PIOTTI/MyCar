@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OWASP Dependency Check — Suppressions
+  Usá este archivo para suprimir falsos positivos del análisis de CVE.
+
+  Formato:
+  <suppress>
+    <notes>Explicación de por qué se suprime este CVE</notes>
+    <cve>CVE-YYYY-XXXXX</cve>
+  </suppress>
+-->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+
+  <!-- Ejemplo: suprimir un CVE específico -->
+  <!--
+  <suppress>
+    <notes>
+      CVE-XXXX-YYYY: Falso positivo — afecta solo a la versión X de la librería
+      en configuraciones que no usamos (modo embebido). Verificado 2025-05.
+    </notes>
+    <cve>CVE-XXXX-YYYY</cve>
+  </suppress>
+  -->
+
+</suppressions>
