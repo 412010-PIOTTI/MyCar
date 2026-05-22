@@ -26,6 +26,9 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Dar permisos al Maven wrapper
+        run: chmod +x ./mvnw
+
       - name: Compilar y correr tests con cobertura
         run: ./mvnw verify --no-transfer-progress
 
