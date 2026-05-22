@@ -3,6 +3,7 @@
 # ===========================
 HELP.md
 target/
+backend/target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
