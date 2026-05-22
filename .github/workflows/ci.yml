@@ -1,0 +1,57 @@
+name: CI - Backend
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    name: 🔨 Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compilar y correr tests con cobertura
+        run: ./mvnw verify --no-transfer-progress
+
+      - name: Publicar reporte de cobertura
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
+          retention-days: 14
+
+      - name: Resumen en el PR
+        if: always()
+        run: |
+          echo "## Resultado CI 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d target/site/jacoco ]; then
+            # Extraer % de cobertura del XML de JaCoCo
+            MISSED=$(grep -oP 'type="LINE"[^/]*/>' target/site/jacoco/jacoco.xml 2>/dev/null | grep -oP 'missed="\K[0-9]+' | awk '{s+=$1}END{print s}' || echo "0")
+            COVERED=$(grep -oP 'type="LINE"[^/]*/>' target/site/jacoco/jacoco.xml 2>/dev/null | grep -oP 'covered="\K[0-9]+' | awk '{s+=$1}END{print s}' || echo "0")
+            TOTAL=$((MISSED + COVERED))
+            if [ "$TOTAL" -gt "0" ]; then
+              PCT=$(echo "scale=1; $COVERED * 100 / $TOTAL" | bc)
+              echo "### Cobertura de tests: **${PCT}%** de líneas cubiertas" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "📊 Descargá el artifact **jacoco-report** para ver el detalle HTML." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No se generó reporte de cobertura." >> $GITHUB_STEP_SUMMARY
+          fi
