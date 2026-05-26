@@ -22,7 +22,7 @@ jobs:
     steps:
       # ── 1. Checkout (historial completo para blame) ────────
       - name: Checkout código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Necesario para que SonarCloud vea el historial completo
 

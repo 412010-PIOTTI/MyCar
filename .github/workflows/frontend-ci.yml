@@ -36,7 +36,7 @@ jobs:
     steps:
       # ── 1. Checkout ────────────────────────────────────────
       - name: Checkout código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # ── 2. Node 20 ─────────────────────────────────────────
       - name: Configurar Node 20
