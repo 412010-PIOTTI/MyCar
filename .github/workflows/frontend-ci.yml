@@ -74,7 +74,7 @@ jobs:
 
       # ── 7. Subir build como artifact ──────────────────────
       - name: Subir dist como artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: success()
         with:
           name: frontend-dist
