@@ -22,7 +22,7 @@ reviews:
     enabled: true
     drafts: false  # No revisar drafts automáticamente
     base_branches:
-      - master
+      - main
       - develop
 
   # Qué tipos de issues reportar

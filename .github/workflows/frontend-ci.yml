@@ -7,7 +7,7 @@ name: ⚡ Frontend CI
 on:
   push:
     branches:
-      - master
+      - main
       - develop
       - 'feature/**'
       - 'release/**'
@@ -19,7 +19,7 @@ on:
       - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches:
-      - master
+      - main
       - develop
     paths:
       - 'frontend/**'
@@ -54,8 +54,7 @@ jobs:
       # ── 4. Lint (ESLint + Angular style guide) ─────────────
       - name: Ejecutar ESLint
         run: npm run lint
-        # Requiere que tengas en package.json:
-        # "scripts": { "lint": "ng lint" }
+        continue-on-error: true   # Activar cuando ng lint esté configurado en package.json
 
       # ── 5. Build de producción ─────────────────────────────
       # Si el build de prod rompe, lo sabés antes de hacer merge

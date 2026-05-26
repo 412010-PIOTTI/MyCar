@@ -7,26 +7,26 @@
 ## Modelo de ramas
 
 ```
-master          ← producción estable, solo recibe de release/* y hotfix/*
+main          ← producción estable, solo recibe de release/* y hotfix/*
   └── develop   ← integración continua, base para features
         ├── feature/nombre     ← nueva funcionalidad
         ├── bugfix/nombre      ← fix de bug en desarrollo
         └── support/nombre     ← soporte de versiones
 
-release/x.x.x  ← sale de develop, mergea a master Y a develop
-hotfix/x.x.x   ← sale de master, mergea a master Y a develop
+release/x.x.x  ← sale de develop, mergea a main Y a develop
+hotfix/x.x.x   ← sale de main, mergea a main Y a develop
 ```
 
 ---
 
-## Regla 1 — Protección de `master`
+## Regla 1 — Protección de `main`
 
 **GitHub → Settings → Branches → Add ruleset**
 
 | Campo | Valor |
 |-------|-------|
-| Ruleset name | `protect-master` |
-| Target branches | `master` |
+| Ruleset name | `protect-main` |
+| Target branches | `main` |
 | Enforcement status | Active |
 
 **Require a pull request before merging**
@@ -100,7 +100,7 @@ hotfix/x.x.x   ← sale de master, mergea a master Y a develop
 **Require matching branches**
 Patrón permitido (regex):
 ```
-^(master|develop|feature/.+|release/\d+\.\d+\.\d+|hotfix/\d+\.\d+\.\d+|bugfix/.+|support/.+)$
+^(main|develop|feature/.+|release/\d+\.\d+\.\d+|hotfix/\d+\.\d+\.\d+|bugfix/.+|support/.+)$
 ```
 
 Esto impide crear ramas con nombres como `arreglo`, `mi-rama`, `prueba`, etc.
@@ -120,9 +120,9 @@ git checkout develop
 git pull origin develop
 git checkout -b release/1.0.0
 
-# Hotfix (desde master)
-git checkout master
-git pull origin master
+# Hotfix (desde main)
+git checkout main
+git pull origin main
 git checkout -b hotfix/1.0.1
 
 # Bugfix durante desarrollo (desde develop)
@@ -152,10 +152,10 @@ Configurar en: **GitHub → Settings → Secrets and variables → Actions → N
 
 ## Checklist de setup inicial
 
-- [ ] Hacer el primer commit en `master`
-- [ ] Crear rama `develop` desde `master`
-- [ ] Subir ambas ramas a GitHub (`git push origin master develop`)
-- [ ] Configurar ruleset `protect-master` en GitHub Settings
+- [ ] Hacer el primer commit en `main`
+- [ ] Crear rama `develop` desde `main`
+- [ ] Subir ambas ramas a GitHub (`git push origin main develop`)
+- [ ] Configurar ruleset `protect-main` en GitHub Settings
 - [ ] Configurar ruleset `protect-develop` en GitHub Settings
 - [ ] Agregar todos los GitHub Secrets listados arriba
 - [ ] Instalar CodeRabbit GitHub App en el repo
