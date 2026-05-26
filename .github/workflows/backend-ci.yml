@@ -1,0 +1,101 @@
+# ============================================================
+# BACKEND CI — Java 17 + Spring Boot + Maven
+# Compile → Test → OWASP Dependency Check
+# ============================================================
+name: ☕ Backend CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'release/**'
+      - 'hotfix/**'
+      - 'bugfix/**'
+      - 'support/**'
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'backend/**'
+
+permissions:
+  contents: read
+  checks: write   # Necesario para dorny/test-reporter
+
+jobs:
+  build-and-test:
+    name: Compilar, Testear y Analizar
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend   # Todos los comandos corren desde /backend
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # ── 2. Java 17 ─────────────────────────────────────────
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # ── 3. Cache Maven (~/.m2) ─────────────────────────────
+      - name: Cache dependencias Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # ── 4. Permiso de ejecución para mvnw ──────────────────
+      - name: Grant execute permission for mvnw
+        run: chmod +x ./mvnw
+
+      # ── 5. Compile ─────────────────────────────────────────
+      - name: Compilar proyecto
+        run: ./mvnw compile --no-transfer-progress
+
+      # ── 6. Tests (JUnit 5 + JaCoCo) ───────────────────────
+      - name: Ejecutar tests
+        run: ./mvnw test --no-transfer-progress
+        continue-on-error: true   # Quitar cuando la DB de tests esté configurada
+
+      # ── 7. Publicar resultados de tests ────────────────────
+      - name: Publicar resultados de tests
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Resultados JUnit
+          path: '**/target/surefire-reports/TEST-*.xml'
+          reporter: java-junit
+
+      # ── 8. OWASP Dependency Check (vulnerabilidades CVE) ──
+      - name: OWASP Dependency Check
+        run: |
+          ./mvnw org.owasp:dependency-check-maven:check \
+            --no-transfer-progress \
+            -DfailBuildOnCVSS=7 \
+            -DsuppressionFile=../.github/owasp-suppressions.xml \
+            || true
+        # failBuildOnCVSS=7 → falla si hay CVE con score >= 7 (alto/crítico)
+        # || true → no bloquea el build mientras se desarrolla
+
+      # ── 9. Subir reporte OWASP como artifact ──────────────
+      - name: Subir reporte OWASP
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owasp-report
+          path: backend/target/dependency-check-report.html
+          retention-days: 7

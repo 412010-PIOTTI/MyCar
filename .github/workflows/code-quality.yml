@@ -1,0 +1,77 @@
+# ============================================================
+# CODE QUALITY — SonarCloud
+# Solo corre en Pull Requests hacia master o develop.
+# Analiza cobertura, code smells, duplicación y bugs.
+# ============================================================
+name: 📊 Code Quality
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+
+    # Solo corre si los otros jobs pasaron
+    # needs: [backend-ci, frontend-ci]  # Descomentar cuando los secrets estén configurados
+
+    steps:
+      # ── 1. Checkout (historial completo para blame) ────────
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Necesario para que SonarCloud vea el historial completo
+
+      # ── 2. Java 17 para correr los tests con cobertura ─────
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # ── 3. Cache Maven ─────────────────────────────────────
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      # ── 4. Tests con reporte de cobertura (JaCoCo) ────────
+      - name: Tests con cobertura JaCoCo
+        run: mvn verify --no-transfer-progress -Pcoverage
+        env:
+          SPRING_DATASOURCE_URL: ${{ secrets.DB_URL }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+
+      # ── 5. SonarCloud Scan ─────────────────────────────────
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # Automático, no necesitás configurarlo
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}      # Lo obtenés en sonarcloud.io
+
+      # ──────────────────────────────────────────────────────
+      # PARA CONFIGURAR SONARCLOUD:
+      # 1. Ir a https://sonarcloud.io → Login con GitHub
+      # 2. "Import an organization" → seleccionar tu cuenta
+      # 3. "Set up" el repo mycar
+      # 4. Copiar el SONAR_TOKEN y agregarlo en GitHub Secrets
+      # 5. Crear sonar-project.properties en la raíz del repo:
+      #
+      #    sonar.projectKey=TU_ORG_mycar
+      #    sonar.organization=TU_ORG
+      #    sonar.sources=backend/src/main/java,frontend/src
+      #    sonar.tests=backend/src/test/java
+      #    sonar.java.coveragePlugin=jacoco
+      #    sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+      #    sonar.exclusions=**/node_modules/**,**/.angular/**
+      # ──────────────────────────────────────────────────────
