@@ -1,4 +1,6 @@
 services:
+
+  # ── Base de datos ─────────────────────────────────────────
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: mycar-sqlserver
@@ -17,6 +19,31 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+
+  # ── Backend Spring Boot ───────────────────────────────────
+  backend:
+    build: ./backend
+    container_name: mycar-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:sqlserver://sqlserver:1433;databaseName=mycar_db;encrypt=false;trustServerCertificate=true"
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: "${DB_PASSWORD}"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_OPEN_IN_VIEW: "false"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  # ── Frontend Angular (nginx) ──────────────────────────────
+  frontend:
+    build: ./frontend
+    container_name: mycar-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
 
 volumes:
   sqlserver_data:
