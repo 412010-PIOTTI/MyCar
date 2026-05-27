@@ -6,10 +6,12 @@
 name: 📊 Code Quality
 
 on:
-  pull_request:
-    branches:
-      - main
-      - develop
+  workflow_dispatch:
+  # Habilitarlo cuando SONAR_TOKEN esté configurado en GitHub Secrets:
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - develop
 
 jobs:
   sonarcloud:
