@@ -46,4 +46,10 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleUserInactive(UserInactiveException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
     }
+
+    /** Returns 400 when the supplied current password does not match the stored hash. */
+    @ExceptionHandler(PasswordMismatchException.class)
+    public ProblemDetail handlePasswordMismatch(PasswordMismatchException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 }
