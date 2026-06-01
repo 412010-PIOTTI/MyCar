@@ -8,7 +8,7 @@ set -e
 /opt/mssql/bin/sqlservr &
 PID=$!
 
-echo "Esperando que SQL Server esté listo..."
+echo "Esperando que SQL Server este listo..."
 until /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -Q "SELECT 1" -No 2>/dev/null; do
     sleep 2
 done
