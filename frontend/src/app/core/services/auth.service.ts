@@ -9,9 +9,18 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
 export interface AuthResponse {
   token: string;
-  expiresIn: number;
+  id: number;
+  name: string;
+  email: string;
+  role: string;
 }
 
 @Injectable({
@@ -29,7 +38,7 @@ export class AuthService {
     );
   }
 
-  register(data: { name: string; email: string; password: string }): Observable<AuthResponse> {
+  register(data: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data).pipe(
       tap((response) => this.saveToken(response.token))
     );
