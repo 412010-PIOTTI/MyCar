@@ -2,6 +2,7 @@ package ar.edu.utn.frc.mycar.web.controller;
 
 import ar.edu.utn.frc.mycar.application.service.AuthService;
 import ar.edu.utn.frc.mycar.domain.enums.Role;
+import ar.edu.utn.frc.mycar.infrastructure.security.JwtService;
 import ar.edu.utn.frc.mycar.web.dto.response.AuthResponse;
 import ar.edu.utn.frc.mycar.web.exception.EmailAlreadyExistsException;
 import ar.edu.utn.frc.mycar.web.exception.InvalidCredentialsException;
@@ -24,6 +25,7 @@ class AuthControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean AuthService authService;
+    @MockitoBean JwtService jwtService;  // required by JwtAuthFilter in WebMvcTest context
 
     static final String VALID_REGISTER_BODY = """
             {
