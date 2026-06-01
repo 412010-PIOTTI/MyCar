@@ -10,6 +10,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+/**
+ * Intercepts every request and validates the JWT from the {@code Authorization} header.
+ * Token validation logic will be added when protected endpoints are introduced.
+ */
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 

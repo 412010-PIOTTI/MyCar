@@ -2,19 +2,38 @@ package ar.edu.utn.frc.mycar.infrastructure.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** OpenAPI / Swagger configuration. Swagger UI at /swagger-ui/index.html, spec at /v3/api-docs. */
+
+/**
+ * OpenAPI / Swagger configuration for the MyCar REST API.
+ *
+ * <p>Registers a global {@code bearerAuth} security scheme so that every
+ * protected endpoint shows the "Authorize" button in the Swagger UI.
+ * The scheme follows RFC 6750: the client sends the token in the
+ * {@code Authorization: Bearer <token>} header.</p>
+ *
+ * <p>Swagger UI is available at: {@code http://localhost:8080/swagger-ui/index.html}<br>
+ * Raw OpenAPI spec at: {@code http://localhost:8080/v3/api-docs}</p>
+ */
 @Configuration
 public class OpenApiConfig {
 
+    /** Security scheme name referenced by {@code @SecurityRequirement} on individual operations. */
     private static final String BEARER_AUTH = "bearerAuth";
 
-    /** Registers the global JWT bearer security scheme shown in Swagger UI. */
+    /**
+     * Builds the top-level {@link OpenAPI} descriptor with API metadata and the
+     * JWT Bearer security scheme applied globally to all operations.
+     *
+     * @return configured {@link OpenAPI} instance
+     */
+
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
@@ -22,6 +41,7 @@ public class OpenApiConfig {
                         .title("MyCar API")
                         .description("REST API for the MyCar vehicle management application")
                         .version("1.0.0"))
+
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_AUTH))
                 .components(new Components()
                         .addSecuritySchemes(BEARER_AUTH, new SecurityScheme()
@@ -29,6 +49,8 @@ public class OpenApiConfig {
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
-                                .description("Paste the JWT returned by /api/auth/register or /api/auth/login")));
+
+                                .description("Paste the JWT token obtained from /api/auth/register or /api/auth/login.")));
+
     }
 }
