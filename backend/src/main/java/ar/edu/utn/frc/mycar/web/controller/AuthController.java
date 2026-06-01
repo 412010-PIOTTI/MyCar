@@ -1,6 +1,7 @@
 package ar.edu.utn.frc.mycar.web.controller;
 
 import ar.edu.utn.frc.mycar.application.service.AuthService;
+import ar.edu.utn.frc.mycar.web.dto.request.LoginRequest;
 import ar.edu.utn.frc.mycar.web.dto.request.RegisterRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.AuthResponse;
 import jakarta.validation.Valid;
@@ -23,5 +24,10 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public AuthResponse register(@RequestBody @Valid RegisterRequest request) {
         return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public AuthResponse login(@RequestBody @Valid LoginRequest request) {
+        return authService.login(request);
     }
 }
