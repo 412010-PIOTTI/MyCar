@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** Handles user registration and authentication. */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -20,6 +21,10 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
+    /**
+     * Registers a new user and returns a JWT.
+     * Throws {@link EmailAlreadyExistsException} if the email is already taken.
+     */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {

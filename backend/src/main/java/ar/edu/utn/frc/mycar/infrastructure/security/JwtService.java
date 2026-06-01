@@ -11,10 +11,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 
+/** Handles JWT creation. Token claims: {@code sub} = email, {@code id}, {@code role}. */
 @Service
 public class JwtService {
 
+    /** HMAC-SHA key derived from {@code app.jwt.secret}. */
     private final SecretKey secretKey;
+
+    /** Token validity in milliseconds, from {@code app.jwt.expiration-ms}. */
     private final long expirationMs;
 
     public JwtService(
@@ -24,6 +28,7 @@ public class JwtService {
         this.expirationMs = expirationMs;
     }
 
+    /** Generates a signed JWT for the given user. */
     public String generateToken(User user) {
         Date now = new Date();
         return Jwts.builder()
