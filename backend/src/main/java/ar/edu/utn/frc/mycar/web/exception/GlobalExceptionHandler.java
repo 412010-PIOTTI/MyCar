@@ -34,4 +34,16 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleDuplicateEmail(EmailAlreadyExistsException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
+
+    /** Returns 401 when the email/password combination is invalid. */
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ProblemDetail handleInvalidCredentials(InvalidCredentialsException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    /** Returns 403 when the account exists but is disabled. */
+    @ExceptionHandler(UserInactiveException.class)
+    public ProblemDetail handleUserInactive(UserInactiveException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
 }

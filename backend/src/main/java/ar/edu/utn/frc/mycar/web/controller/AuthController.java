@@ -1,6 +1,7 @@
 package ar.edu.utn.frc.mycar.web.controller;
 
 import ar.edu.utn.frc.mycar.application.service.AuthService;
+import ar.edu.utn.frc.mycar.web.dto.request.LoginRequest;
 import ar.edu.utn.frc.mycar.web.dto.request.RegisterRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.AuthResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,5 +60,41 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public AuthResponse register(@RequestBody @Valid RegisterRequest request) {
         return authService.register(request);
+    }
+
+    @Operation(
+            summary = "Authenticate with email and password",
+            description = """
+                    Validates the provided credentials and returns a signed JWT valid for 24 hours. \
+                    The token must be sent as `Authorization: Bearer <token>` on all protected requests. \
+                    The error response is intentionally identical for unknown email and wrong password \
+                    to prevent user enumeration."""
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Login successful. Returns the JWT and user details.",
+                    content = @Content(schema = @Schema(implementation = AuthResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Validation failed — email or password field is missing or malformed.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Invalid credentials — email not found or password does not match.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Account is disabled.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            )
+    })
+    @SecurityRequirements   // no token required for this endpoint
+    @PostMapping("/login")
+    public AuthResponse login(@RequestBody @Valid LoginRequest request) {
+        return authService.login(request);
     }
 }
