@@ -42,7 +42,7 @@ export class RegisterComponent {
   errorMessage = '';
 
   readonly stats = [
-    { value: '12k+', label: 'Usuarios activos' },
+    { value: '1', label: 'Usuario activo' },
     { value: '98%', label: 'Satisfacción' },
     { value: '0$', label: 'Para siempre gratis' },
   ];
