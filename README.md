@@ -1,34 +1,33 @@
-# MyCar 🚗
+# MyCar
 
-**AutoGest** es una aplicación web de gestión integral del vehículo. Permite a los propietarios registrar y centralizar toda la información de su auto identificado por patente: gastos, mantenimiento, documentos y alertas. La plataforma genera un historial digital completo y transferible.
+Aplicación web de gestión integral del vehículo. Permite registrar y centralizar toda la información de un auto identificado por patente: gastos, mantenimiento, documentos y alertas. Genera un historial digital completo y transferible.
 
 ---
 
 ## Stack tecnológico
 
-| Capa       | Tecnología              |
-|------------|-------------------------|
-| Backend    | Java 17 + Spring Boot 3 |
-| Frontend   | Angular 19              |
-| Base de datos | SQL Server           |
-| Build      | Maven                   |
+| Capa          | Tecnología                        |
+|---------------|-----------------------------------|
+| Backend       | Java 17 + Spring Boot 4 + Maven   |
+| Frontend      | Angular 19 + Tailwind CSS         |
+| Base de datos | SQL Server 2022                   |
+| Auth          | Spring Security + JWT (JJWT 0.12) |
+| Contenedores  | Docker + Docker Compose           |
 
 ---
 
 ## Requisitos previos
 
-Antes de levantar el proyecto, asegurate de tener instalado:
+- **Java 17** — `java -version`
+- **Docker Desktop** — para levantar SQL Server sin instalarlo localmente
+- **Node.js 20+** — `node --version`
+- **Git**
 
-- **Java 17+** → `java -version`
-- **Maven 3.8+** → `mvn -version` (o usar el wrapper incluido `./mvnw`)
-- **Node.js 20+** → `node -version`
-- **Angular CLI 19** → `npm install -g @angular/cli`
-- **SQL Server** (local o Docker) con una instancia disponible
-- **Git** → `git -version`
+> Maven no necesita instalación separada: el proyecto incluye `./mvnw`.
 
 ---
 
-## Setup del Backend (Spring Boot)
+## Inicio rápido (recomendado)
 
 ### 1. Clonar el repositorio
 
@@ -37,113 +36,147 @@ git clone https://github.com/412010-PIOTTI/MyCar.git
 cd MyCar
 ```
 
-### 2. Configurar la base de datos
-
-Crear la base de datos en SQL Server:
-
-```sql
-CREATE DATABASE mycar_db;
-```
-
-Crear el archivo de configuración local (no se versiona):
+### 2. Crear el archivo de variables de entorno
 
 ```bash
-# En backend/src/main/resources/
-cp backend/src/main/resources/application.properties backend/src/main/resources/application-local.properties
+# Windows (PowerShell)
+copy .env.example .env
+
+# Mac / Linux
+cp .env.example .env
 ```
 
-Editar `application-local.properties` con tus credenciales:
+El archivo `.env` ya viene con una contraseña válida para desarrollo local. No lo commitees (está en `.gitignore`).
+
+### 3. Levantar la base de datos con Docker
+
+```bash
+docker-compose up sqlserver -d
+```
+
+Esto levanta únicamente SQL Server en el puerto `1433` y crea automáticamente la base de datos `mycar_db`. El primer arranque tarda ~30 segundos.
+
+Para verificar que está listo:
+
+```bash
+docker logs mycar-sqlserver
+# Debe terminar con: "SQL Server listo en localhost:1433"
+```
+
+### 4. Configurar el backend para desarrollo local
+
+Crear el archivo (no se versiona):
+
+```
+backend/src/main/resources/application-local.properties
+```
+
+Con este contenido:
 
 ```properties
 spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=mycar_db;encrypt=false
-spring.datasource.username=TU_USUARIO
-spring.datasource.password=TU_PASSWORD
+spring.datasource.username=sa
+spring.datasource.password=MyCar_Dev_2024!
 spring.jpa.hibernate.ddl-auto=update
 ```
 
-### 3. Compilar y ejecutar
+> Usá la misma contraseña que definiste en `.env`.
+
+### 5. Levantar el backend
+
+**Opción A — Desde IntelliJ IDEA (recomendado):**
+
+1. `File → Open` → seleccioná `backend/pom.xml` → **Open as Project**
+2. Esperá que Maven descargue dependencias
+3. Abrí `MycarApplication.java` → click derecho → **Run**
+4. En la run configuration: **Edit Configurations** → **Active profiles**: `local` → Apply
+5. Run
+
+**Opción B — Desde terminal:**
 
 ```bash
+# Windows (PowerShell)
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.0.17.10-hotspot"
+
 cd backend
-
-# Con Maven wrapper (recomendado)
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
-
-# O con Maven instalado
-mvn spring-boot:run -Dspring-boot.run.profiles=local
+./mvnw spring-boot:run "-Dspring-boot.run.profiles=local"
 ```
 
-El backend quedará disponible en: `http://localhost:8080`
+El backend queda disponible en `http://localhost:8080`.
 
----
+### 6. Verificar que funciona
 
-## Setup del Frontend (Angular)
+```bash
+curl http://localhost:8080/ping
+# → {"status":"ok","app":"MyCar"}
+```
 
-### 1. Ir al directorio del frontend
+### 7. Levantar el frontend
 
 ```bash
 cd frontend
+npm ci
+npm start
+# → http://localhost:4200
 ```
-
-### 2. Instalar dependencias
-
-```bash
-npm install
-```
-
-### 3. Ejecutar en modo desarrollo
-
-```bash
-ng serve
-```
-
-La app quedará disponible en: `http://localhost:4200`
-
-> El frontend está preconfigurado para apuntar al backend en `http://localhost:8080` (`src/environments/environment.ts`).
 
 ---
 
-## Flujo de trabajo con Git
+## API de autenticación
 
-### Convención de ramas
+| Método | Endpoint              | Body                              | Respuesta       |
+|--------|-----------------------|-----------------------------------|-----------------|
+| POST   | `/api/auth/register`  | `{name, email, password}`         | `201` + JWT     |
+| POST   | `/api/auth/login`     | `{email, password}`               | `200` + JWT     |
 
-| Prefijo     | Uso                                      | Ejemplo                        |
-|-------------|------------------------------------------|--------------------------------|
-| `feature/`  | Nueva funcionalidad                      | `feature/registro-vehiculo`    |
-| `bugfix/`   | Corrección de bug no crítico             | `bugfix/validacion-patente`    |
-| `hotfix/`   | Corrección urgente sobre producción      | `hotfix/login-error`           |
+**Register — 201 Created:**
+```json
+{
+  "token": "<JWT>",
+  "id": 1,
+  "name": "Ana Pérez",
+  "email": "ana@example.com",
+  "role": "USER"
+}
+```
 
-### Cómo crear una rama y hacer PR
+**Errores:**
+- `400` — campo inválido: `{"errors": {"campo": "mensaje"}}`
+- `401` — credenciales incorrectas: `{"detail": "Invalid email or password"}`
+- `403` — cuenta desactivada: `{"detail": "Account is disabled"}`
+- `409` — email ya registrado: `{"detail": "Email already registered: ..."}`
+
+El JWT debe enviarse en todos los requests protegidos:
+```
+Authorization: Bearer <token>
+```
+
+---
+
+## Stack completo con Docker (opcional)
+
+Para levantar backend + base de datos + frontend en contenedores:
 
 ```bash
-# Siempre partir desde main actualizado
-git checkout main
-git pull origin main
-
-# Crear rama nueva
-git checkout -b feature/nombre-de-la-funcionalidad
-
-# Trabajar, commitear
-git add .
-git commit -m "feat: descripción clara del cambio"
-
-# Subir rama
-git push origin feature/nombre-de-la-funcionalidad
+docker-compose up --build
 ```
 
-Luego abrir un **Pull Request** en GitHub hacia `main`. La rama `main` está protegida: no se permiten pushes directos.
+| Servicio  | URL                      |
+|-----------|--------------------------|
+| Frontend  | http://localhost:4200     |
+| Backend   | http://localhost:8080     |
+| SQL Server| localhost:1433            |
 
-### Convención de commits (recomendada)
+---
 
+## Tests
+
+```bash
+cd backend
+./mvnw test --no-transfer-progress
 ```
-feat:     nueva funcionalidad
-fix:      corrección de bug
-docs:     cambios en documentación
-style:    formato, sin cambios de lógica
-refactor: refactorización sin cambio de comportamiento
-test:     agregar o modificar tests
-chore:    tareas de build, configuración
-```
+
+Los tests usan H2 en memoria — no requieren Docker ni SQL Server.
 
 ---
 
@@ -151,33 +184,69 @@ chore:    tareas de build, configuración
 
 ```
 MyCar/
-├── backend/                        # Spring Boot (Maven)
-│   ├── src/
-│   │   ├── main/java/              # Código fuente Java
-│   │   └── main/resources/        # application.properties
+├── backend/                          # Spring Boot 4
+│   ├── src/main/java/.../
+│   │   ├── domain/
+│   │   │   ├── entity/               # Entidades JPA
+│   │   │   └── repository/           # Spring Data JPA
+│   │   ├── application/service/      # Lógica de negocio (@Transactional)
+│   │   ├── infrastructure/security/  # JWT, Spring Security
+│   │   └── web/
+│   │       ├── controller/           # REST controllers
+│   │       ├── dto/                  # Request / Response DTOs
+│   │       └── exception/            # @ControllerAdvice global
 │   └── pom.xml
-├── frontend/                       # Angular 19
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── core/
-│   │   │   │   ├── guards/         # authGuard
-│   │   │   │   ├── interceptors/   # authInterceptor (JWT)
-│   │   │   │   └── services/       # AuthService
-│   │   │   ├── features/
-│   │   │   │   ├── auth/           # login, register (lazy-loaded)
-│   │   │   │   ├── dashboard/      # dashboard (lazy-loaded)
-│   │   │   │   ├── vehicles/       # lista y detalle (lazy-loaded)
-│   │   │   │   └── expenses/       # lista de gastos (lazy-loaded)
-│   │   │   ├── app.config.ts       # HttpClient + interceptor + router
-│   │   │   └── app.routes.ts       # Rutas principales con lazy loading
-│   │   ├── environments/
-│   │   │   └── environment.ts      # apiUrl → localhost:8080
-│   │   └── styles.css              # Tailwind CSS
-│   ├── tailwind.config.js
-│   └── package.json
-├── .gitignore
+├── frontend/                         # Angular 19
+│   └── src/app/
+│       ├── core/                     # guards, interceptors, services
+│       └── features/                 # módulos lazy-loaded
+├── docker/
+│   └── init-db.sh                    # Crea mycar_db al primer arranque
+├── docker-compose.yml
+├── .env.example                      # Plantilla de variables de entorno
 └── README.md
 ```
+
+---
+
+## Flujo de Git
+
+```
+feature/** → develop → main
+```
+
+| Rama         | Uso                                         |
+|--------------|---------------------------------------------|
+| `main`       | Producción — solo via PR desde `develop`    |
+| `develop`    | Integración — base para nuevas features     |
+| `feature/**` | Nueva funcionalidad (desde `develop`)       |
+| `bugfix/**`  | Corrección de bug (desde `develop`)         |
+| `hotfix/**`  | Corrección urgente (desde `main`)           |
+
+```bash
+# Crear una feature
+git checkout develop
+git pull origin develop
+git checkout -b feature/nombre-funcionalidad
+
+# Commitear
+git add <archivos>
+git commit -m "feat: descripción del cambio"
+
+# Abrir PR hacia develop en GitHub
+git push origin feature/nombre-funcionalidad
+```
+
+### Convención de commits
+
+| Prefijo    | Uso                              |
+|------------|----------------------------------|
+| `feat:`    | Nueva funcionalidad              |
+| `fix:`     | Corrección de bug                |
+| `chore:`   | Build, dependencias, config      |
+| `refactor:`| Refactorización sin nuevo feat   |
+| `test:`    | Tests                            |
+| `docs:`    | Documentación                    |
 
 ---
 
