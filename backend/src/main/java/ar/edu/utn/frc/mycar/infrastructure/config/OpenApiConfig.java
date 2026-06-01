@@ -9,6 +9,7 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+
 /**
  * OpenAPI / Swagger configuration for the MyCar REST API.
  *
@@ -32,16 +33,15 @@ public class OpenApiConfig {
      *
      * @return configured {@link OpenAPI} instance
      */
+
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
                 .info(new Info()
                         .title("MyCar API")
-                        .description("Vehicle management REST API — register, authenticate, and manage vehicles, expenses, and maintenance records.")
-                        .version("1.0.0")
-                        .contact(new Contact()
-                                .name("MyCar Team")
-                                .url("https://github.com/412010-PIOTTI/MyCar")))
+                        .description("REST API for the MyCar vehicle management application")
+                        .version("1.0.0"))
+
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_AUTH))
                 .components(new Components()
                         .addSecuritySchemes(BEARER_AUTH, new SecurityScheme()
@@ -49,6 +49,8 @@ public class OpenApiConfig {
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
+
                                 .description("Paste the JWT token obtained from /api/auth/register or /api/auth/login.")));
+
     }
 }

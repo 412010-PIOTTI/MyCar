@@ -22,7 +22,8 @@ public class SecurityConfig {
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
-    /** Builds the filter chain: CSRF off, stateless sessions, JWT filter before UsernamePasswordAuthenticationFilter. */
+    /** Stateless filter chain: CSRF disabled, session-less, JWT filter before form login. */
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -49,8 +50,9 @@ public class SecurityConfig {
     }
 
     /**
-     * Disables automatic servlet-container registration of {@link JwtAuthFilter}.
-     * Prevents the filter from running twice (once in the security chain, once as a servlet filter).
+     * Prevents double-registration: JwtAuthFilter is a @Component so Spring Boot
+     * would register it as a servlet filter automatically; disabling that here
+     * lets Spring Security control it exclusively via addFilterBefore.
      */
     @Bean
     public FilterRegistrationBean<JwtAuthFilter> jwtFilterRegistration(JwtAuthFilter filter) {
