@@ -36,6 +36,10 @@ module.exports = {
           DEFAULT: '#2EA7E0',   // Usa secondary para info
           light:   '#E4F4FB',   // Background de alert info
         },
+        // ── Auth screens ─────────────────────────────────────────
+        'auth-panel': '#0b1c30',      // left panel background
+        'auth-accent': '#1e3a8a',     // primary action color (buttons, links)
+        'auth-accent-dark': '#162d6e', // hover state for auth-accent
         // ── Neutrals & Surface ───────────────────────────────────
         sidebar: '#083761',     // Fondo del sidebar
         surface: {
