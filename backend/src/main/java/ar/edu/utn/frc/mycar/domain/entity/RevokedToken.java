@@ -5,6 +5,11 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * Stores the {@code jti} of JWTs that have been explicitly revoked (logout or account deletion).
+ * The filter chain checks this table on every request so revoked tokens are rejected even before
+ * their natural expiry. Expired entries are cleaned up hourly by {@link ar.edu.utn.frc.mycar.application.service.RevokedTokenService#cleanExpired()}.
+ */
 @Entity
 @Table(name = "revoked_tokens")
 @Getter

@@ -16,6 +16,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -139,5 +140,22 @@ class AuthControllerTest {
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.email").exists());
+    }
+
+    // ── Logout ────────────────────────────────────────────────────────────────
+
+    @Test
+    void logout_authenticated_returns200AndRevokesToken() throws Exception {
+        when(jwtService.isTokenValid("test-token")).thenReturn(true);
+        when(jwtService.extractJti("test-token")).thenReturn("some-jti");
+        when(revokedTokenService.isRevoked("some-jti")).thenReturn(false);
+        when(jwtService.extractEmail("test-token")).thenReturn("ana@example.com");
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Sesión cerrada correctamente"));
+
+        verify(authService).logout("test-token");
     }
 }

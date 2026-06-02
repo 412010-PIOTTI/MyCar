@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
 
+/** Spring Data repository for the JWT blacklist table. */
 public interface RevokedTokenRepository extends JpaRepository<RevokedToken, Long> {
 
     boolean existsByTokenJti(String tokenJti);

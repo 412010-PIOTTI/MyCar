@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -162,6 +163,46 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"currentPassword": "secret123", "newPassword": "newSecret456"}
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ── DELETE /api/users/me ──────────────────────────────────────────────────
+
+    @Test
+    void deleteAccount_authenticated_returns200() throws Exception {
+        mockMvc.perform(delete("/api/users/me")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"password": "secret123"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").exists());
+
+        verify(userService).deleteAccount(eq(USER_EMAIL), eq("secret123"), any());
+    }
+
+    @Test
+    void deleteAccount_wrongPassword_returns400() throws Exception {
+        doThrow(new PasswordMismatchException())
+                .when(userService).deleteAccount(eq(USER_EMAIL), any(), any());
+
+        mockMvc.perform(delete("/api/users/me")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"password": "wrongPassword"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deleteAccount_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(delete("/api/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"password": "secret123"}
                                 """))
                 .andExpect(status().isUnauthorized());
     }
