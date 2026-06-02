@@ -12,6 +12,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class SidebarComponent {
   loggingOut = false;
+  collapsed = false;
 
   private destroyRef = inject(DestroyRef);
 
@@ -19,6 +20,10 @@ export class SidebarComponent {
 
   isActive(path: string): boolean {
     return this.router.url.startsWith(path);
+  }
+
+  toggleCollapsed(): void {
+    this.collapsed = !this.collapsed;
   }
 
   logout(): void {
