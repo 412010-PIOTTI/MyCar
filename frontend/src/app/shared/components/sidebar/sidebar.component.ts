@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -10,6 +11,10 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent {
+  loggingOut = false;
+
+  private destroyRef = inject(DestroyRef);
+
   constructor(private router: Router, private authService: AuthService) {}
 
   isActive(path: string): boolean {
@@ -17,6 +22,11 @@ export class SidebarComponent {
   }
 
   logout(): void {
-    this.authService.logout();
+    if (this.loggingOut) return;
+    this.loggingOut = true;
+    this.authService
+      .logout()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ error: () => (this.loggingOut = false) });
   }
 }

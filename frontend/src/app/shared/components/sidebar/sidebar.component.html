@@ -2,13 +2,8 @@
 
   <!-- Logo -->
   <div class="flex items-center gap-3 px-4 border-b border-surface-border" style="height: 64px">
-    <div class="flex items-center justify-center bg-primary rounded-md" style="width:40px;height:40px">
-      <svg class="text-white" style="width:22px;height:22px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M19 9l-1.5-4.5A2 2 0 0015.6 3H8.4a2 2 0 00-1.9 1.5L5 9M3 9h18M5 9v9a2 2 0 002 2h10a2 2 0 002-2V9" />
-        <circle cx="7.5" cy="18" r="1.5" fill="currentColor" stroke="none"/>
-        <circle cx="16.5" cy="18" r="1.5" fill="currentColor" stroke="none"/>
-      </svg>
+    <div class="flex items-center justify-center bg-white rounded-md" style="width:40px;height:40px">
+      <img src="assets/isologo.png" alt="MyCar" class="h-20 w-20 rounded-full object-contain" />
     </div>
     <span class="text-lg font-bold text-text-primary">MyCar</span>
   </div>
@@ -105,13 +100,21 @@
 
     <button
       (click)="logout()"
+      [disabled]="loggingOut"
       class="flex items-center gap-3 px-3 py-2 rounded text-sm font-medium w-full text-left
-             text-danger hover:bg-danger-light transition-colors">
-      <svg class="flex-shrink-0" style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-      </svg>
-      Cerrar sesión
+             text-danger hover:bg-danger-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+      @if (loggingOut) {
+        <svg class="animate-spin flex-shrink-0" style="width:16px;height:16px" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      } @else {
+        <svg class="flex-shrink-0" style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      }
+      {{ loggingOut ? 'Cerrando...' : 'Cerrar sesión' }}
     </button>
   </div>
 

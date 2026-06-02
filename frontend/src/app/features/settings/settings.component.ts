@@ -5,14 +5,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShellComponent } from '../../shared/components/app-shell/app-shell.component';
 import { SectionCardComponent } from '../../shared/components/section-card/section-card.component';
 import { ToggleComponent } from '../../shared/components/toggle/toggle.component';
+import { ConfirmDeleteModalComponent } from '../../shared/components/confirm-delete-modal/confirm-delete-modal.component';
 import { UserService } from '../../core/services/user.service';
+import { AuthService } from '../../core/services/auth.service';
 
 type FormStatus = 'idle' | 'loading' | 'success' | 'error';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AppShellComponent, SectionCardComponent, ToggleComponent],
+  imports: [CommonModule, ReactiveFormsModule, AppShellComponent, SectionCardComponent, ToggleComponent, ConfirmDeleteModalComponent],
   templateUrl: './settings.component.html',
 })
 export class SettingsComponent implements OnInit {
@@ -31,7 +33,11 @@ export class SettingsComponent implements OnInit {
   userEmail = '';
   userRole = '';
 
-  constructor(private fb: FormBuilder, private userService: UserService) {
+  showDeleteModal = false;
+  deleteLoading = false;
+  deleteError = '';
+
+  constructor(private fb: FormBuilder, private userService: UserService, private authService: AuthService) {
     this.profileForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
     });
@@ -70,6 +76,39 @@ export class SettingsComponent implements OnInit {
         this.profileError = 'No se pudo actualizar el perfil. Intentá de nuevo.';
       },
     });
+  }
+
+  openDeleteModal(): void {
+    this.deleteError = '';
+    this.showDeleteModal = true;
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.deleteError = '';
+  }
+
+  onDeleteConfirmed(password: string): void {
+    this.deleteLoading = true;
+    this.deleteError = '';
+
+    this.userService
+      .deleteAccount(password)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.deleteLoading = false;
+          this.authService.clearLocalSession();
+        },
+        error: (err) => {
+          this.deleteLoading = false;
+          if (err.status === 400) {
+            this.deleteError = 'Contraseña incorrecta. Verificá e intentá de nuevo.';
+          } else {
+            this.deleteError = 'No se pudo procesar la solicitud. Intentá de nuevo.';
+          }
+        },
+      });
   }
 
   changePassword(): void {

@@ -33,6 +33,7 @@ class AuthServiceTest {
     @Mock UserRepository userRepository;
     @Mock PasswordEncoder passwordEncoder;
     @Mock JwtService jwtService;
+    @Mock RevokedTokenService revokedTokenService;
 
     @InjectMocks AuthService authService;
 
@@ -136,5 +137,28 @@ class AuthServiceTest {
 
         verify(passwordEncoder, never()).matches(any(), any());
         verify(jwtService, never()).generateToken(any());
+    }
+
+    // ── Logout ────────────────────────────────────────────────────────────────
+
+    @Test
+    void logout_validToken_revokesToken() {
+        when(jwtService.extractEmail("valid.token.here")).thenReturn("ana@example.com");
+        when(userRepository.findByEmail("ana@example.com")).thenReturn(Optional.of(activeUser));
+
+        authService.logout("valid.token.here");
+
+        verify(revokedTokenService).revokeToken("valid.token.here", activeUser);
+    }
+
+    @Test
+    void logout_unknownEmail_throwsInvalidCredentialsException() {
+        when(jwtService.extractEmail("valid.token.here")).thenReturn("ghost@example.com");
+        when(userRepository.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.logout("valid.token.here"))
+                .isInstanceOf(InvalidCredentialsException.class);
+
+        verify(revokedTokenService, never()).revokeToken(any(), any());
     }
 }

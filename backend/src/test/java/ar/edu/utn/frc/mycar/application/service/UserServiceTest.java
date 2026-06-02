@@ -31,6 +31,7 @@ class UserServiceTest {
 
     @Mock UserRepository userRepository;
     @Mock PasswordEncoder passwordEncoder;
+    @Mock RevokedTokenService revokedTokenService;
 
     @InjectMocks UserService userService;
 
@@ -149,5 +150,43 @@ class UserServiceTest {
 
         verify(passwordEncoder, never()).matches(any(), any());
         verify(userRepository, never()).save(any());
+    }
+
+    // ── deleteAccount ─────────────────────────────────────────────────────────
+
+    @Test
+    void deleteAccount_correctPassword_softDeletesAndRevokesToken() {
+        when(userRepository.findByEmail("ana@example.com")).thenReturn(Optional.of(activeUser));
+        when(passwordEncoder.matches("secret123", "$2a$hashed")).thenReturn(true);
+        when(userRepository.save(any(User.class))).thenReturn(activeUser);
+
+        userService.deleteAccount("ana@example.com", "secret123", "jwt.token.here");
+
+        assertThat(activeUser.isActive()).isFalse();
+        verify(userRepository).save(activeUser);
+        verify(revokedTokenService).revokeToken("jwt.token.here", activeUser);
+    }
+
+    @Test
+    void deleteAccount_wrongPassword_throwsPasswordMismatchException() {
+        when(userRepository.findByEmail("ana@example.com")).thenReturn(Optional.of(activeUser));
+        when(passwordEncoder.matches("wrongPassword", "$2a$hashed")).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.deleteAccount("ana@example.com", "wrongPassword", "jwt.token.here"))
+                .isInstanceOf(PasswordMismatchException.class);
+
+        verify(userRepository, never()).save(any());
+        verify(revokedTokenService, never()).revokeToken(any(), any());
+    }
+
+    @Test
+    void deleteAccount_unknownEmail_throwsInvalidCredentialsException() {
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.deleteAccount("unknown@example.com", "secret123", "jwt.token.here"))
+                .isInstanceOf(InvalidCredentialsException.class);
+
+        verify(passwordEncoder, never()).matches(any(), any());
+        verify(revokedTokenService, never()).revokeToken(any(), any());
     }
 }
