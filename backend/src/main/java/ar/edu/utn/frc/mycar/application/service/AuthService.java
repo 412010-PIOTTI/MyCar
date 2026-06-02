@@ -15,7 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Handles user registration and authentication. */
+/** Handles user registration, authentication, and logout. */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -23,6 +23,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RevokedTokenService revokedTokenService;
 
     /**
      * Registers a new user and returns a JWT.
@@ -80,5 +81,17 @@ public class AuthService {
                 user.getEmail(),
                 user.getRole()
         );
+    }
+
+    /**
+     * Revokes the given JWT by adding it to the blacklist.
+     * The token is identified by its {@code jti} claim, so even if intercepted it cannot be reused.
+     */
+    @Transactional
+    public void logout(String token) {
+        String email = jwtService.extractEmail(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(InvalidCredentialsException::new);
+        revokedTokenService.revokeToken(token, user);
     }
 }

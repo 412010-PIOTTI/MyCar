@@ -11,15 +11,19 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 /** Endpoints for user registration and authentication. */
 @Tag(name = "Authentication", description = "Register and authenticate users")
@@ -96,5 +100,27 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@RequestBody @Valid LoginRequest request) {
         return authService.login(request);
+    }
+
+    @Operation(
+            summary = "Logout — invalidate the current JWT",
+            description = """
+                    Adds the token's jti to the server-side blacklist. \
+                    The token is immediately unusable even if it hasn't expired yet. \
+                    The client must also delete the token from its local storage."""
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Token revoked successfully."),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Missing or already-revoked JWT.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            )
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout(HttpServletRequest request) {
+        String token = request.getHeader("Authorization").substring(7);
+        authService.logout(token);
+        return ResponseEntity.ok(Map.of("message", "Sesión cerrada correctamente"));
     }
 }
