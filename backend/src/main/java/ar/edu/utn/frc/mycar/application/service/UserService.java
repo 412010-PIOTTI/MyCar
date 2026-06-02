@@ -18,6 +18,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RevokedTokenService revokedTokenService;
 
     @Transactional(readOnly = true)
     public UserProfileResponse getMe(String email) {
@@ -40,6 +41,21 @@ public class UserService {
         }
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    /**
+     * Soft-deletes the account: sets {@code active=false} and revokes the current token.
+     * Throws {@link PasswordMismatchException} if the provided password is incorrect.
+     */
+    @Transactional
+    public void deleteAccount(String email, String password, String token) {
+        User user = findByEmail(email);
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new PasswordMismatchException();
+        }
+        user.setActive(false);
+        userRepository.save(user);
+        revokedTokenService.revokeToken(token, user);
     }
 
     private User findByEmail(String email) {
