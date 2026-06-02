@@ -1,0 +1,40 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+export interface UserProfile {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+}
+
+export interface UpdateProfileRequest {
+  name: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+@Injectable({ providedIn: 'root' })
+export class UserService {
+  private readonly apiUrl = `${environment.apiUrl}/users`;
+
+  constructor(private http: HttpClient) {}
+
+  getMe(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${this.apiUrl}/me`);
+  }
+
+  updateProfile(data: UpdateProfileRequest): Observable<UserProfile> {
+    return this.http.put<UserProfile>(`${this.apiUrl}/me`, data);
+  }
+
+  changePassword(data: ChangePasswordRequest): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/me/password`, data);
+  }
+}
