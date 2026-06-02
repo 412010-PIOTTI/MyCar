@@ -1,0 +1,293 @@
+<app-shell>
+  <div class="p-6">
+
+    <h1 class="text-2xl font-bold text-text-primary mb-6">Configuración</h1>
+
+    <div class="grid gap-6" style="grid-template-columns: 1fr 20rem">
+
+      <!-- ── Left column ─────────────────────────────────────────── -->
+      <div class="space-y-6">
+
+        <!-- Editar Perfil -->
+        <app-section-card title="Editar Perfil" subtitle="Información Personal">
+          <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+            <div class="grid grid-cols-2 gap-4 mb-5">
+              <div>
+                <label class="block text-xs text-text-secondary mb-1.5">Nombre Completo</label>
+                <input
+                  type="text"
+                  formControlName="name"
+                  class="form-input"
+                  placeholder="Tu nombre"
+                />
+                @if (profileForm.get('name')?.invalid && profileForm.get('name')?.touched) {
+                  <p class="text-xs text-danger mt-1">El nombre es requerido (mínimo 2 caracteres).</p>
+                }
+              </div>
+              <div>
+                <label class="block text-xs text-text-secondary mb-1.5">Correo Electrónico</label>
+                <input
+                  type="email"
+                  [value]="userEmail"
+                  readonly
+                  class="form-input bg-gray-50 text-text-secondary cursor-not-allowed"
+                  title="El email no se puede modificar"
+                />
+                <p class="text-xs text-text-muted mt-1">El correo no puede modificarse.</p>
+              </div>
+            </div>
+
+            @if (profileStatus === 'success') {
+              <div class="flex items-center gap-2 text-sm text-success mb-4 bg-success-light px-3 py-2 rounded">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Perfil actualizado correctamente.
+              </div>
+            }
+            @if (profileStatus === 'error') {
+              <div class="flex items-center gap-2 text-sm text-danger mb-4 bg-danger-light px-3 py-2 rounded">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {{ profileError }}
+              </div>
+            }
+
+            <div class="flex justify-end">
+              <button
+                type="submit"
+                [disabled]="profileForm.invalid || profileStatus === 'loading'"
+                class="btn-primary">
+                @if (profileStatus === 'loading') {
+                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  Guardando...
+                } @else {
+                  Guardar Cambios
+                }
+              </button>
+            </div>
+          </form>
+        </app-section-card>
+
+        <!-- Cambiar Contraseña -->
+        <app-section-card title="Cambiar Contraseña">
+          <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+            <div class="space-y-4 mb-5">
+              <div>
+                <label class="block text-xs text-text-secondary mb-1.5">Contraseña Actual</label>
+                <div class="relative">
+                  <input
+                    [type]="showCurrentPassword ? 'text' : 'password'"
+                    formControlName="currentPassword"
+                    class="form-input pr-10"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    (click)="showCurrentPassword = !showCurrentPassword"
+                    class="absolute inset-y-0 right-0 flex items-center px-3 text-text-secondary hover:text-text-primary">
+                    @if (showCurrentPassword) {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    } @else {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    }
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs text-text-secondary mb-1.5">Nueva Contraseña</label>
+                <div class="relative">
+                  <input
+                    [type]="showNewPassword ? 'text' : 'password'"
+                    formControlName="newPassword"
+                    class="form-input pr-10"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    (click)="showNewPassword = !showNewPassword"
+                    class="absolute inset-y-0 right-0 flex items-center px-3 text-text-secondary hover:text-text-primary">
+                    @if (showNewPassword) {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    } @else {
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    }
+                  </button>
+                </div>
+                <p class="text-xs text-text-muted mt-1">Mínimo 8 caracteres.</p>
+                @if (passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched) {
+                  <p class="text-xs text-danger mt-1">La nueva contraseña debe tener al menos 8 caracteres.</p>
+                }
+              </div>
+            </div>
+
+            @if (passwordStatus === 'success') {
+              <div class="flex items-center gap-2 text-sm text-success mb-4 bg-success-light px-3 py-2 rounded">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Contraseña cambiada correctamente.
+              </div>
+            }
+            @if (passwordStatus === 'error') {
+              <div class="flex items-center gap-2 text-sm text-danger mb-4 bg-danger-light px-3 py-2 rounded">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {{ passwordError }}
+              </div>
+            }
+
+            <div class="flex justify-end">
+              <button
+                type="submit"
+                [disabled]="passwordForm.invalid || passwordStatus === 'loading'"
+                class="btn-primary">
+                @if (passwordStatus === 'loading') {
+                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  Cambiando...
+                } @else {
+                  Cambiar Contraseña
+                }
+              </button>
+            </div>
+          </form>
+        </app-section-card>
+
+        <!-- Tipo de Cuenta -->
+        <app-section-card title="Tipo de Cuenta">
+          <div class="grid grid-cols-2 gap-4">
+
+            <div class="border-2 rounded-md p-4 transition-colors"
+              [ngClass]="userRole === 'USER'
+                ? 'border-primary bg-blue-50'
+                : 'border-surface-border'">
+              <div class="flex justify-between items-start mb-3">
+                <svg class="w-7 h-7 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center"
+                  [ngClass]="userRole === 'USER' ? 'border-primary' : 'border-gray-300'">
+                  @if (userRole === 'USER') {
+                    <div class="w-2 h-2 rounded-full bg-primary"></div>
+                  }
+                </div>
+              </div>
+              <h3 class="font-semibold text-sm text-text-primary mb-1">Usuario</h3>
+              <p class="text-xs text-text-secondary">Gestión personal de vehículos, gastos y mantenimientos individuales.</p>
+            </div>
+
+            <div class="border rounded-md p-4 opacity-60 cursor-not-allowed transition-colors border-surface-border">
+              <div class="flex justify-between items-start mb-3">
+                <svg class="w-7 h-7 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <div class="w-4 h-4 rounded-full border-2 border-gray-300"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-text-primary mb-1">Concesionario</h3>
+              <p class="text-xs text-text-secondary">Gestión de flota comercial, ventas, servicios técnicos y AI insights.</p>
+            </div>
+
+          </div>
+        </app-section-card>
+
+      </div>
+
+      <!-- ── Right column ────────────────────────────────────────── -->
+      <div class="space-y-6">
+
+        <!-- Notificaciones -->
+        <app-section-card title="Notificaciones">
+          <div class="space-y-1">
+
+            <div class="flex items-start justify-between py-3 border-b border-surface-border">
+              <div class="mr-3">
+                <p class="text-sm font-semibold text-text-primary">Mantenimiento</p>
+                <p class="text-xs text-text-secondary mt-0.5">Recordatorios de servicios próximos.</p>
+              </div>
+              <app-toggle [checked]="false" [disabled]="true"></app-toggle>
+            </div>
+
+            <div class="flex items-start justify-between py-3 border-b border-surface-border">
+              <div class="mr-3">
+                <p class="text-sm font-semibold text-text-primary">Vencimientos</p>
+                <p class="text-xs text-text-secondary mt-0.5">Alertas de seguro y documentación.</p>
+              </div>
+              <app-toggle [checked]="false" [disabled]="true"></app-toggle>
+            </div>
+
+            <div class="flex items-start justify-between py-3">
+              <div class="mr-3">
+                <p class="text-sm font-semibold text-text-primary">Alertas del AI Chat</p>
+                <p class="text-xs text-text-secondary mt-0.5">Resúmenes semanales de salud vehicular.</p>
+              </div>
+              <app-toggle [checked]="false" [disabled]="true"></app-toggle>
+            </div>
+
+          </div>
+          <p class="text-xs text-text-muted italic mt-4">
+            Trabajaremos en esto en los próximos sprints.
+          </p>
+        </app-section-card>
+
+        <!-- Zona de Peligro -->
+        <div class="bg-white rounded-md border border-surface-border shadow-card overflow-hidden">
+          <div class="px-6 py-5 flex items-center gap-2">
+            <svg class="w-5 h-5 text-danger flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <h2 class="text-base font-semibold text-danger">Zona de Peligro</h2>
+          </div>
+          <hr class="border-surface-border">
+          <div class="p-6">
+            <p class="text-sm text-text-secondary mb-6">
+              Una vez que elimines tu cuenta, todos tus datos de vehículos, historiales y
+              documentos se borrarán permanentemente.
+            </p>
+            <button
+              disabled
+              class="w-full px-4 py-2.5 border border-danger text-danger rounded-md text-sm font-semibold
+                     opacity-50 cursor-not-allowed flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Solicitar Baja de Cuenta
+            </button>
+            <p class="text-xs text-text-muted italic text-center mt-2">
+              Trabajaremos en esto en los próximos sprints.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</app-shell>
