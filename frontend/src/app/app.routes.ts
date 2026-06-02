@@ -31,6 +31,12 @@ export const routes: Routes = [
       import('./features/expenses/expenses.routes').then((m) => m.EXPENSES_ROUTES),
   },
   {
+    path: 'settings',
+    canActivate: [authGuard],
+    loadChildren: () =>
+      import('./features/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
+  },
+  {
     path: '**',
     redirectTo: 'dashboard',
   },
