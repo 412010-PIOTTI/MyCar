@@ -1,6 +1,7 @@
 package ar.edu.utn.frc.mycar.web.controller;
 
 import ar.edu.utn.frc.mycar.application.service.AuthService;
+import ar.edu.utn.frc.mycar.application.service.RevokedTokenService;
 import ar.edu.utn.frc.mycar.domain.enums.Role;
 import ar.edu.utn.frc.mycar.infrastructure.security.JwtService;
 import ar.edu.utn.frc.mycar.web.dto.response.AuthResponse;
@@ -25,7 +26,8 @@ class AuthControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean AuthService authService;
-    @MockitoBean JwtService jwtService;  // required by JwtAuthFilter in WebMvcTest context
+    @MockitoBean JwtService jwtService;           // required by JwtAuthFilter in WebMvcTest context
+    @MockitoBean RevokedTokenService revokedTokenService; // required by JwtAuthFilter in WebMvcTest context
 
     static final String VALID_REGISTER_BODY = """
             {
