@@ -1,6 +1,8 @@
 package ar.edu.utn.frc.mycar.infrastructure.security;
 
 import ar.edu.utn.frc.mycar.domain.entity.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,5 +43,28 @@ public class JwtService {
                 .expiration(new Date(now.getTime() + expirationMs))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    /** Extracts the email (subject) from a signed JWT. Throws if the token is invalid or expired. */
+    public String extractEmail(String token) {
+        return parseClaims(token).getSubject();
+    }
+
+    /** Returns {@code true} if the token signature is valid and the token has not expired. */
+    public boolean isTokenValid(String token) {
+        try {
+            parseClaims(token);
+            return true;
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }
