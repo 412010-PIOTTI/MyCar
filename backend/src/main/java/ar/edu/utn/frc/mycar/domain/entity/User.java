@@ -43,6 +43,10 @@ public class User {
     @Builder.Default
     private boolean active = true;
 
+    @Column(name = "two_factor_enabled", nullable = false)
+    @Builder.Default
+    private boolean twoFactorEnabled = false;
+
     // ── Relaciones ──────────────────────────────────────────────────────────
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

@@ -23,6 +23,15 @@ export interface AuthResponse {
   role: string;
 }
 
+export interface LoginResponse {
+  token?: string;
+  id?: number;
+  name?: string;
+  email?: string;
+  role?: string;
+  requires2FA?: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -30,17 +39,43 @@ export class AuthService {
   private readonly TOKEN_KEY = 'mycar_token';
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 
+  /** Holds the masked email while the user is in the 2FA verification flow. */
+  pending2FAEmail: string | null = null;
+
   constructor(private http: HttpClient, private router: Router) {}
 
-  login(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials).pipe(
-      tap((response) => this.saveToken(response.token))
+  login(credentials: LoginRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
+      tap((response) => {
+        if (response.requires2FA) {
+          this.pending2FAEmail = response.email ?? null;
+        } else if (response.token) {
+          this.saveToken(response.token);
+        }
+      }),
     );
+  }
+
+  verify2FA(email: string, code: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/verify-2fa`, { email, code }).pipe(
+      tap((response) => {
+        this.saveToken(response.token);
+        this.pending2FAEmail = null;
+      }),
+    );
+  }
+
+  resend2FA(email: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/verify-2fa/resend`, { email });
+  }
+
+  cancel2FA(email: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/verify-2fa/cancel`, { body: { email } });
   }
 
   register(data: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data).pipe(
-      tap((response) => this.saveToken(response.token))
+      tap((response) => this.saveToken(response.token)),
     );
   }
 
@@ -49,7 +84,7 @@ export class AuthService {
       finalize(() => {
         localStorage.removeItem(this.TOKEN_KEY);
         this.router.navigate(['/auth/login']);
-      })
+      }),
     );
   }
 

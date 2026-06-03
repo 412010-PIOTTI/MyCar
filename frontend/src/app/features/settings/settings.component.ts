@@ -1,6 +1,6 @@
 import { Component, OnInit, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShellComponent } from '../../shared/components/app-shell/app-shell.component';
 import { SectionCardComponent } from '../../shared/components/section-card/section-card.component';
@@ -33,6 +33,14 @@ export class SettingsComponent implements OnInit {
   userEmail = '';
   userRole = '';
 
+  // 2FA state
+  twoFactorEnabled = false;
+  show2FAModal = false;
+  twoFAModalPasswordControl = new FormControl<string | null>('', Validators.required);
+  twoFAModalLoading = false;
+  twoFAModalError = '';
+  pending2FAEnabled = false;
+
   showDeleteModal = false;
   deleteLoading = false;
   deleteError = '';
@@ -57,6 +65,47 @@ export class SettingsComponent implements OnInit {
           this.profileForm.patchValue({ name: user.name });
           this.userEmail = user.email;
           this.userRole = user.role;
+          this.twoFactorEnabled = user.twoFactorEnabled;
+        },
+      });
+  }
+
+  onToggle2FA(newValue: boolean): void {
+    this.pending2FAEnabled = newValue;
+    this.twoFAModalPasswordControl.reset('');
+    this.twoFAModalError = '';
+    this.show2FAModal = true;
+  }
+
+  close2FAModal(): void {
+    if (this.twoFAModalLoading) return;
+    this.show2FAModal = false;
+    this.twoFAModalError = '';
+  }
+
+  confirm2FAToggle(): void {
+    this.twoFAModalPasswordControl.markAsTouched();
+    if (this.twoFAModalPasswordControl.invalid) return;
+
+    this.twoFAModalLoading = true;
+    this.twoFAModalError = '';
+
+    this.userService
+      .toggle2FA(this.pending2FAEnabled, this.twoFAModalPasswordControl.value!)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (user) => {
+          this.twoFactorEnabled = user.twoFactorEnabled;
+          this.twoFAModalLoading = false;
+          this.show2FAModal = false;
+        },
+        error: (err) => {
+          this.twoFAModalLoading = false;
+          if (err.status === 400) {
+            this.twoFAModalError = 'Contraseña incorrecta. Verificá e intentá de nuevo.';
+          } else {
+            this.twoFAModalError = 'No se pudo actualizar la configuración. Intentá de nuevo.';
+          }
         },
       });
   }

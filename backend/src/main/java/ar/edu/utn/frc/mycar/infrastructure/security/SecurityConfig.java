@@ -40,6 +40,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/register",
+                                "/api/auth/verify-2fa",
+                                "/api/auth/verify-2fa/resend",
+                                "/api/auth/verify-2fa/cancel",
                                 "/ping",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

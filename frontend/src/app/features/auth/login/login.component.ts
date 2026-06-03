@@ -50,7 +50,13 @@ export class LoginComponent {
         finalize(() => (this.loading = false)),
       )
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
+        next: (response) => {
+          if (response.requires2FA) {
+            this.router.navigate(['/auth/verify-2fa']);
+          } else {
+            this.router.navigate(['/dashboard']);
+          }
+        },
         error: (err) => {
           this.errorMessage =
             err.status === 401 || err.status === 403

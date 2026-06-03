@@ -9,6 +9,7 @@ export interface UserProfile {
   email: string;
   role: string;
   createdAt: string;
+  twoFactorEnabled: boolean;
 }
 
 export interface UpdateProfileRequest {
@@ -36,6 +37,10 @@ export class UserService {
 
   changePassword(data: ChangePasswordRequest): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/me/password`, data);
+  }
+
+  toggle2FA(enabled: boolean, password: string): Observable<UserProfile> {
+    return this.http.put<UserProfile>(`${this.apiUrl}/me/2fa`, { enabled, password });
   }
 
   deleteAccount(password: string): Observable<void> {

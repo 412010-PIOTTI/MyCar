@@ -22,5 +22,8 @@ public record UserProfileResponse(
         Role role,
 
         @Schema(description = "Account creation timestamp")
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+
+        @Schema(description = "Whether two-factor authentication is enabled", example = "false")
+        boolean twoFactorEnabled
 ) {}

@@ -7,6 +7,7 @@ import ar.edu.utn.frc.mycar.infrastructure.security.JwtService;
 import ar.edu.utn.frc.mycar.web.dto.request.LoginRequest;
 import ar.edu.utn.frc.mycar.web.dto.request.RegisterRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.AuthResponse;
+import ar.edu.utn.frc.mycar.web.dto.response.LoginResponse;
 import ar.edu.utn.frc.mycar.web.exception.EmailAlreadyExistsException;
 import ar.edu.utn.frc.mycar.web.exception.InvalidCredentialsException;
 import ar.edu.utn.frc.mycar.web.exception.UserInactiveException;
@@ -24,6 +25,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RevokedTokenService revokedTokenService;
+    private final TwoFactorService twoFactorService;
 
     /**
      * Registers a new user and returns a JWT.
@@ -55,12 +57,16 @@ public class AuthService {
     }
 
     /**
-     * Authenticates a user and returns a JWT.
-     * Throws {@link InvalidCredentialsException} if the email or password is wrong.
-     * Throws {@link UserInactiveException} if the account is disabled.
+     * Authenticates a user.
+     * <ul>
+     *   <li>If 2FA is disabled: returns a {@link LoginResponse} with the JWT immediately.</li>
+     *   <li>If 2FA is enabled: generates and emails a code, returns {@link LoginResponse}
+     *       with {@code requires2FA=true} and the masked email. The JWT is issued later
+     *       via {@link #verifyTwoFactor(String, String)}.</li>
+     * </ul>
      */
-    @Transactional(readOnly = true)
-    public AuthResponse login(LoginRequest request) {
+    @Transactional
+    public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
 
@@ -72,20 +78,35 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
 
-        String token = jwtService.generateToken(user);
+        if (user.isTwoFactorEnabled()) {
+            twoFactorService.generateAndSend(user);
+            return LoginResponse.builder()
+                    .requires2FA(Boolean.TRUE)
+                    .email(TwoFactorService.maskEmail(user.getEmail()))
+                    .build();
+        }
 
-        return new AuthResponse(
-                token,
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getRole()
-        );
+        String token = jwtService.generateToken(user);
+        return LoginResponse.builder()
+                .token(token)
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .build();
+    }
+
+    /**
+     * Completes the 2FA challenge and issues the JWT if the code is correct.
+     * Delegates all validation logic to {@link TwoFactorService#verify(String, String)}.
+     */
+    @Transactional
+    public AuthResponse verifyTwoFactor(String email, String code) {
+        return twoFactorService.verify(email, code);
     }
 
     /**
      * Revokes the given JWT by adding it to the blacklist.
-     * The token is identified by its {@code jti} claim, so even if intercepted it cannot be reused.
      */
     @Transactional
     public void logout(String token) {

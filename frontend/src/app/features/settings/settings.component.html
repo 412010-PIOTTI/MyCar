@@ -222,6 +222,27 @@
       <!-- ── Right column ────────────────────────────────────────── -->
       <div class="space-y-6">
 
+        <!-- Seguridad — 2FA -->
+        <app-section-card title="Seguridad">
+          <div class="flex items-start justify-between py-2">
+            <div class="mr-4">
+              <p class="text-sm font-semibold text-text-primary">Verificación en dos pasos</p>
+              <p class="text-xs text-text-secondary mt-0.5">
+                Al activarla, cada inicio de sesión requerirá un código enviado a tu email.
+              </p>
+              @if (twoFactorEnabled) {
+                <p class="text-xs text-success font-medium mt-1">Activa</p>
+              } @else {
+                <p class="text-xs text-text-muted mt-1">Desactivada</p>
+              }
+            </div>
+            <app-toggle
+              [checked]="twoFactorEnabled"
+              (checkedChange)="onToggle2FA($event)">
+            </app-toggle>
+          </div>
+        </app-section-card>
+
         <!-- Notificaciones -->
         <app-section-card title="Notificaciones">
           <div class="space-y-1">
@@ -296,3 +317,90 @@
   (cancelled)="closeDeleteModal()"
   (confirmed)="onDeleteConfirmed($event)"
 />
+
+<!-- Modal confirmación 2FA -->
+@if (show2FAModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+       (click)="close2FAModal()">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6" (click)="$event.stopPropagation()">
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-text-primary">
+            {{ pending2FAEnabled ? 'Activar' : 'Desactivar' }} verificación en dos pasos
+          </h2>
+          <p class="text-xs text-text-secondary">Confirmá tu contraseña para continuar.</p>
+        </div>
+      </div>
+
+      <p class="text-sm text-text-secondary mb-5">
+        @if (pending2FAEnabled) {
+          Una vez activada, cada inicio de sesión requerirá un código de 6 dígitos enviado a tu email.
+        } @else {
+          Al desactivarla, tu cuenta quedará protegida solo por contraseña.
+        }
+      </p>
+
+      <div class="mb-4">
+        <label class="block text-xs font-medium text-text-secondary mb-1.5">Contraseña actual</label>
+        <div class="relative">
+          <input
+            type="password"
+            [formControl]="twoFAModalPasswordControl"
+            placeholder="••••••••"
+            class="form-input w-full"
+            [class.border-danger]="twoFAModalPasswordControl.invalid && twoFAModalPasswordControl.touched"
+          />
+        </div>
+        @if (twoFAModalPasswordControl.invalid && twoFAModalPasswordControl.touched) {
+          <p class="text-xs text-danger mt-1">La contraseña es requerida.</p>
+        }
+      </div>
+
+      @if (twoFAModalError) {
+        <div class="flex items-center gap-2 text-sm text-danger mb-4 bg-danger-light px-3 py-2 rounded">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {{ twoFAModalError }}
+        </div>
+      }
+
+      <div class="flex gap-3 justify-end">
+        <button
+          type="button"
+          (click)="close2FAModal()"
+          [disabled]="twoFAModalLoading"
+          class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-border
+                 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="confirm2FAToggle()"
+          [disabled]="twoFAModalLoading"
+          class="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-md
+                 hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                 flex items-center gap-2">
+          @if (twoFAModalLoading) {
+            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            Procesando...
+          } @else {
+            Confirmar
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

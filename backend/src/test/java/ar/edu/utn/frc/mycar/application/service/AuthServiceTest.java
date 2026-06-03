@@ -7,6 +7,7 @@ import ar.edu.utn.frc.mycar.infrastructure.security.JwtService;
 import ar.edu.utn.frc.mycar.web.dto.request.LoginRequest;
 import ar.edu.utn.frc.mycar.web.dto.request.RegisterRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.AuthResponse;
+import ar.edu.utn.frc.mycar.web.dto.response.LoginResponse;
 import ar.edu.utn.frc.mycar.web.exception.EmailAlreadyExistsException;
 import ar.edu.utn.frc.mycar.web.exception.InvalidCredentialsException;
 import ar.edu.utn.frc.mycar.web.exception.UserInactiveException;
@@ -34,6 +35,7 @@ class AuthServiceTest {
     @Mock PasswordEncoder passwordEncoder;
     @Mock JwtService jwtService;
     @Mock RevokedTokenService revokedTokenService;
+    @Mock TwoFactorService twoFactorService;
 
     @InjectMocks AuthService authService;
 
@@ -91,17 +93,18 @@ class AuthServiceTest {
     // ── Login ─────────────────────────────────────────────────────────────────
 
     @Test
-    void login_success_returnsAuthResponse() {
+    void login_success_returnsLoginResponse() {
         when(userRepository.findByEmail("ana@example.com")).thenReturn(Optional.of(activeUser));
         when(passwordEncoder.matches("secret123", "$2a$hashed")).thenReturn(true);
         when(jwtService.generateToken(activeUser)).thenReturn("jwt.login.token");
 
-        AuthResponse response = authService.login(loginRequest);
+        LoginResponse response = authService.login(loginRequest);
 
         assertThat(response.getToken()).isEqualTo("jwt.login.token");
         assertThat(response.getId()).isEqualTo(1L);
         assertThat(response.getEmail()).isEqualTo("ana@example.com");
         assertThat(response.getRole()).isEqualTo(Role.USER);
+        assertThat(response.getRequires2FA()).isNull();
     }
 
     @Test
