@@ -2,7 +2,6 @@ import { Component, OnInit, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AppShellComponent } from '../../shared/components/app-shell/app-shell.component';
 import { SectionCardComponent } from '../../shared/components/section-card/section-card.component';
 import { ToggleComponent } from '../../shared/components/toggle/toggle.component';
 import { ConfirmDeleteModalComponent } from '../../shared/components/confirm-delete-modal/confirm-delete-modal.component';
@@ -14,7 +13,7 @@ type FormStatus = 'idle' | 'loading' | 'success' | 'error';
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AppShellComponent, SectionCardComponent, ToggleComponent, ConfirmDeleteModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, SectionCardComponent, ToggleComponent, ConfirmDeleteModalComponent],
   templateUrl: './settings.component.html',
 })
 export class SettingsComponent implements OnInit {
