@@ -3,6 +3,7 @@ package ar.edu.utn.frc.mycar.web.controller;
 import ar.edu.utn.frc.mycar.application.service.UserService;
 import ar.edu.utn.frc.mycar.web.dto.request.ChangePasswordRequest;
 import ar.edu.utn.frc.mycar.web.dto.request.DeleteAccountRequest;
+import ar.edu.utn.frc.mycar.web.dto.request.Toggle2FARequest;
 import ar.edu.utn.frc.mycar.web.dto.request.UpdateProfileRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.UserProfileResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -107,6 +109,24 @@ public class UserController {
     public void changePassword(Authentication authentication,
                                @RequestBody @Valid ChangePasswordRequest request) {
         userService.changePassword(authentication.getName(), request);
+    }
+
+    @Operation(
+            summary = "Enable or disable two-factor authentication",
+            description = "Requires current password confirmation. Returns the updated profile."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "2FA state updated.",
+                    content = @Content(schema = @Schema(implementation = UserProfileResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Password incorrect or validation failed.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    })
+    @PutMapping("/me/2fa")
+    public UserProfileResponse toggle2FA(Authentication authentication,
+                                         @RequestBody @Valid Toggle2FARequest request) {
+        return userService.toggle2FA(authentication.getName(), request);
     }
 
     @Operation(

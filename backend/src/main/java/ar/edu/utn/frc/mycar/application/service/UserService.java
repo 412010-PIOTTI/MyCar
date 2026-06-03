@@ -3,6 +3,7 @@ package ar.edu.utn.frc.mycar.application.service;
 import ar.edu.utn.frc.mycar.domain.entity.User;
 import ar.edu.utn.frc.mycar.domain.repository.UserRepository;
 import ar.edu.utn.frc.mycar.web.dto.request.ChangePasswordRequest;
+import ar.edu.utn.frc.mycar.web.dto.request.Toggle2FARequest;
 import ar.edu.utn.frc.mycar.web.dto.request.UpdateProfileRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.UserProfileResponse;
 import ar.edu.utn.frc.mycar.web.exception.InvalidCredentialsException;
@@ -44,6 +45,20 @@ public class UserService {
     }
 
     /**
+     * Enables or disables 2FA for the user. Requires password confirmation.
+     * Throws {@link PasswordMismatchException} if the password is wrong.
+     */
+    @Transactional
+    public UserProfileResponse toggle2FA(String email, Toggle2FARequest request) {
+        User user = findByEmail(email);
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new PasswordMismatchException();
+        }
+        user.setTwoFactorEnabled(request.isEnabled());
+        return toResponse(userRepository.save(user));
+    }
+
+    /**
      * Soft-deletes the account: sets {@code active=false} and revokes the current token.
      * Throws {@link PasswordMismatchException} if the provided password is incorrect.
      */
@@ -69,7 +84,8 @@ public class UserService {
                 user.getName(),
                 user.getEmail(),
                 user.getRole(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.isTwoFactorEnabled()
         );
     }
 }

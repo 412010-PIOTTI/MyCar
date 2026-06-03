@@ -52,4 +52,10 @@ public class GlobalExceptionHandler {
     public ProblemDetail handlePasswordMismatch(PasswordMismatchException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
+
+    /** Returns 401 for 2FA verification failures (wrong code, expired, max attempts). */
+    @ExceptionHandler(TwoFactorVerificationException.class)
+    public ProblemDetail handleTwoFactorVerification(TwoFactorVerificationException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
 }

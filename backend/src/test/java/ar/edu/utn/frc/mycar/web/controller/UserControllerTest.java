@@ -44,7 +44,7 @@ class UserControllerTest {
     static final String USER_EMAIL = "ana@example.com";
     static final UserProfileResponse PROFILE_STUB = new UserProfileResponse(
             1L, "Ana Pérez", USER_EMAIL, Role.USER,
-            LocalDateTime.of(2025, 1, 1, 0, 0));
+            LocalDateTime.of(2025, 1, 1, 0, 0), false);
 
     String authHeader;
 
@@ -81,7 +81,7 @@ class UserControllerTest {
     void updateMe_validName_returnsUpdatedProfile() throws Exception {
         UserProfileResponse updated = new UserProfileResponse(
                 1L, "Ana García", USER_EMAIL, Role.USER,
-                LocalDateTime.of(2025, 1, 1, 0, 0));
+                LocalDateTime.of(2025, 1, 1, 0, 0), false);
         when(userService.updateProfile(eq(USER_EMAIL), any())).thenReturn(updated);
 
         mockMvc.perform(put("/api/users/me")

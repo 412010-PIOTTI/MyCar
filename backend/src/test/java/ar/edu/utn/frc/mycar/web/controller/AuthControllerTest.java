@@ -2,9 +2,11 @@ package ar.edu.utn.frc.mycar.web.controller;
 
 import ar.edu.utn.frc.mycar.application.service.AuthService;
 import ar.edu.utn.frc.mycar.application.service.RevokedTokenService;
+import ar.edu.utn.frc.mycar.application.service.TwoFactorService;
 import ar.edu.utn.frc.mycar.domain.enums.Role;
 import ar.edu.utn.frc.mycar.infrastructure.security.JwtService;
 import ar.edu.utn.frc.mycar.web.dto.response.AuthResponse;
+import ar.edu.utn.frc.mycar.web.dto.response.LoginResponse;
 import ar.edu.utn.frc.mycar.web.exception.EmailAlreadyExistsException;
 import ar.edu.utn.frc.mycar.web.exception.InvalidCredentialsException;
 import ar.edu.utn.frc.mycar.web.exception.UserInactiveException;
@@ -27,6 +29,7 @@ class AuthControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean AuthService authService;
+    @MockitoBean TwoFactorService twoFactorService;
     @MockitoBean JwtService jwtService;           // required by JwtAuthFilter in WebMvcTest context
     @MockitoBean RevokedTokenService revokedTokenService; // required by JwtAuthFilter in WebMvcTest context
 
@@ -98,8 +101,9 @@ class AuthControllerTest {
 
     @Test
     void login_validCredentials_returns200() throws Exception {
-        AuthResponse stub = new AuthResponse("jwt.login.here", 1L, "Ana Pérez",
-                "ana@example.com", Role.USER);
+        LoginResponse stub = LoginResponse.builder()
+                .token("jwt.login.here").id(1L).name("Ana Pérez")
+                .email("ana@example.com").role(Role.USER).build();
         when(authService.login(any())).thenReturn(stub);
 
         mockMvc.perform(post("/api/auth/login")
