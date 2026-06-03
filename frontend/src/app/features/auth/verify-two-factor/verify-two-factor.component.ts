@@ -23,7 +23,8 @@ export class VerifyTwoFactorComponent implements OnInit, OnDestroy {
     code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
   });
 
-  maskedEmail = '';
+  maskedEmail = '';      // display only
+  private realEmail = ''; // used for API calls
   loading = false;
   resending = false;
   errorMessage = '';
@@ -37,7 +38,8 @@ export class VerifyTwoFactorComponent implements OnInit, OnDestroy {
       this.router.navigate(['/auth/login']);
       return;
     }
-    this.maskedEmail = this.authService.pending2FAEmail;
+    this.realEmail = this.authService.pending2FAEmail;
+    this.maskedEmail = this.authService.pending2FAMaskedEmail ?? this.realEmail;
   }
 
   ngOnDestroy(): void {
@@ -54,7 +56,7 @@ export class VerifyTwoFactorComponent implements OnInit, OnDestroy {
 
     const code = this.form.value.code!;
     this.authService
-      .verify2FA(this.maskedEmail, code)
+      .verify2FA(this.realEmail, code)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => (this.loading = false)),
@@ -75,7 +77,7 @@ export class VerifyTwoFactorComponent implements OnInit, OnDestroy {
     this.successMessage = '';
 
     this.authService
-      .resend2FA(this.maskedEmail)
+      .resend2FA(this.realEmail)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => (this.resending = false)),
@@ -94,7 +96,7 @@ export class VerifyTwoFactorComponent implements OnInit, OnDestroy {
 
   cancel(): void {
     this.authService
-      .cancel2FA(this.maskedEmail)
+      .cancel2FA(this.realEmail)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ complete: () => this.router.navigate(['/auth/login']) });
   }
