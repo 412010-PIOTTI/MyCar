@@ -73,7 +73,7 @@ jobs:
 
       # ── 7. Publicar resultados de tests ────────────────────
       - name: Publicar resultados de tests
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3
         if: always()
         with:
           name: Resultados JUnit
