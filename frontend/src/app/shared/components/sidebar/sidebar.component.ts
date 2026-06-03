@@ -1,22 +1,19 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AuthService } from '../../../core/services/auth.service';
+import { LogoutConfirmModalComponent } from '../logout-confirm-modal/logout-confirm-modal.component';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LogoutConfirmModalComponent],
   templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent {
-  loggingOut = false;
   collapsed = false;
+  showLogoutModal = false;
 
-  private destroyRef = inject(DestroyRef);
-
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(private router: Router) {}
 
   isActive(path: string): boolean {
     return this.router.url.startsWith(path);
@@ -26,12 +23,11 @@ export class SidebarComponent {
     this.collapsed = !this.collapsed;
   }
 
-  logout(): void {
-    if (this.loggingOut) return;
-    this.loggingOut = true;
-    this.authService
-      .logout()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ error: () => (this.loggingOut = false) });
+  openLogoutModal(): void {
+    this.showLogoutModal = true;
+  }
+
+  closeLogoutModal(): void {
+    this.showLogoutModal = false;
   }
 }

@@ -58,16 +58,17 @@
       @if (!collapsed) { Mis vehículos }
     </a>
 
-    <span
+    <a routerLink="/maintenance"
       [title]="collapsed ? 'Mantenimiento' : ''"
-      class="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-text-secondary opacity-50 cursor-not-allowed select-none"
-      [class.justify-center]="collapsed">
+      class="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors"
+      [class.justify-center]="collapsed"
+      [ngClass]="isActive('/maintenance') ? 'bg-primary text-white' : 'text-text-secondary hover:bg-gray-50 hover:text-text-primary'">
       <svg class="flex-shrink-0" style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
       </svg>
       @if (!collapsed) { Mantenimiento }
-    </span>
+    </a>
 
     <a routerLink="/expenses"
       [title]="collapsed ? 'Gastos' : ''"
@@ -81,49 +82,53 @@
       @if (!collapsed) { Gastos }
     </a>
 
-    <span
+    <a routerLink="/documents"
       [title]="collapsed ? 'Documentos' : ''"
-      class="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-text-secondary opacity-50 cursor-not-allowed select-none"
-      [class.justify-center]="collapsed">
+      class="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors"
+      [class.justify-center]="collapsed"
+      [ngClass]="isActive('/documents') ? 'bg-primary text-white' : 'text-text-secondary hover:bg-gray-50 hover:text-text-primary'">
       <svg class="flex-shrink-0" style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
       @if (!collapsed) { Documentos }
-    </span>
+    </a>
 
-    <span
+    <a routerLink="/alerts"
       [title]="collapsed ? 'Alertas' : ''"
-      class="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-text-secondary opacity-50 cursor-not-allowed select-none"
-      [class.justify-center]="collapsed">
+      class="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors"
+      [class.justify-center]="collapsed"
+      [ngClass]="isActive('/alerts') ? 'bg-primary text-white' : 'text-text-secondary hover:bg-gray-50 hover:text-text-primary'">
       <svg class="flex-shrink-0" style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
       </svg>
       @if (!collapsed) { Alertas }
-    </span>
+    </a>
 
-    <span
+    <a routerLink="/transfers"
       [title]="collapsed ? 'Transferencias' : ''"
-      class="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-text-secondary opacity-50 cursor-not-allowed select-none"
-      [class.justify-center]="collapsed">
+      class="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors"
+      [class.justify-center]="collapsed"
+      [ngClass]="isActive('/transfers') ? 'bg-primary text-white' : 'text-text-secondary hover:bg-gray-50 hover:text-text-primary'">
       <svg class="flex-shrink-0" style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
       </svg>
       @if (!collapsed) { Transferencias }
-    </span>
+    </a>
 
-    <span
+    <a routerLink="/ai-chat"
       [title]="collapsed ? 'AI Chat' : ''"
-      class="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-text-secondary opacity-50 cursor-not-allowed select-none"
-      [class.justify-center]="collapsed">
+      class="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors"
+      [class.justify-center]="collapsed"
+      [ngClass]="isActive('/ai-chat') ? 'bg-primary text-white' : 'text-text-secondary hover:bg-gray-50 hover:text-text-primary'">
       <svg class="flex-shrink-0" style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
       </svg>
       @if (!collapsed) { AI Chat }
-    </span>
+    </a>
 
   </nav>
 
@@ -144,28 +149,23 @@
     </a>
 
     <button
-      (click)="logout()"
-      [disabled]="loggingOut"
-      [title]="collapsed ? (loggingOut ? 'Cerrando...' : 'Cerrar sesión') : ''"
+      (click)="openLogoutModal()"
+      [title]="collapsed ? 'Cerrar sesión' : ''"
       class="flex items-center gap-3 px-3 py-2 rounded text-sm font-medium w-full text-left
-             text-danger hover:bg-danger-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+             text-danger hover:bg-danger-light transition-colors"
       [class.justify-center]="collapsed">
-      @if (loggingOut) {
-        <svg class="animate-spin flex-shrink-0" style="width:16px;height:16px" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-      } @else {
-        <svg class="flex-shrink-0" style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-        </svg>
-      }
-      @if (!collapsed) {
-        {{ loggingOut ? 'Cerrando...' : 'Cerrar sesión' }}
-      }
+      <svg class="flex-shrink-0" style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+      </svg>
+      @if (!collapsed) { Cerrar sesión }
     </button>
 
   </div>
 
 </aside>
+
+<app-logout-confirm-modal
+  [visible]="showLogoutModal"
+  (cancelled)="closeLogoutModal()"
+/>
