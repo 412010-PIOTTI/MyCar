@@ -73,6 +73,17 @@ public class UserService {
         revokedTokenService.revokeToken(token, user);
     }
 
+    /**
+     * Returns the {@link User} entity by email, for internal service-to-service use only.
+     * Controllers must never call this method directly.
+     *
+     * @throws InvalidCredentialsException if no user matches the given email
+     */
+    @Transactional(readOnly = true)
+    public User getEntity(String email) {
+        return findByEmail(email);
+    }
+
     private User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(InvalidCredentialsException::new);
