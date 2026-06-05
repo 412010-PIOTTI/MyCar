@@ -1,0 +1,170 @@
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+  (click)="onBackdropClick()"
+>
+  <div
+    class="bg-white rounded-xl shadow-modal w-full max-w-lg p-6"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-lg font-bold text-text-primary">Agregar Vehículo</h2>
+        <p class="text-xs text-text-secondary mt-0.5">Completá los datos del nuevo vehículo.</p>
+      </div>
+      <button
+        type="button"
+        (click)="close.emit()"
+        [disabled]="loading"
+        class="text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+        aria-label="Cerrar"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <!-- Row: Marca / Modelo -->
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label for="brand" class="block text-xs font-medium text-text-secondary mb-1.5">Marca <span class="text-danger">*</span></label>
+          <input
+            id="brand"
+            type="text"
+            formControlName="brand"
+            placeholder="Toyota"
+            class="form-input"
+            [class.border-danger]="fieldError('brand')"
+          />
+          @if (fieldError('brand')) {
+            <p class="text-xs text-danger mt-1">{{ fieldError('brand') }}</p>
+          }
+        </div>
+        <div>
+          <label for="model" class="block text-xs font-medium text-text-secondary mb-1.5">Modelo <span class="text-danger">*</span></label>
+          <input
+            id="model"
+            type="text"
+            formControlName="model"
+            placeholder="Corolla"
+            class="form-input"
+            [class.border-danger]="fieldError('model')"
+          />
+          @if (fieldError('model')) {
+            <p class="text-xs text-danger mt-1">{{ fieldError('model') }}</p>
+          }
+        </div>
+      </div>
+
+      <!-- Row: Patente / Año -->
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label for="plate" class="block text-xs font-medium text-text-secondary mb-1.5">Patente <span class="text-danger">*</span></label>
+          <input
+            id="plate"
+            type="text"
+            formControlName="plate"
+            placeholder="AB123CD"
+            class="form-input uppercase"
+            [class.border-danger]="fieldError('plate')"
+          />
+          @if (fieldError('plate')) {
+            <p class="text-xs text-danger mt-1">{{ fieldError('plate') }}</p>
+          }
+        </div>
+        <div>
+          <label for="year" class="block text-xs font-medium text-text-secondary mb-1.5">Año <span class="text-danger">*</span></label>
+          <input
+            id="year"
+            type="number"
+            formControlName="year"
+            placeholder="{{ currentYear }}"
+            [min]="1900"
+            [max]="currentYear"
+            class="form-input"
+            [class.border-danger]="fieldError('year')"
+          />
+          @if (fieldError('year')) {
+            <p class="text-xs text-danger mt-1">{{ fieldError('year') }}</p>
+          }
+        </div>
+      </div>
+
+      <!-- Row: Color / KM inicial -->
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <div>
+          <label for="color" class="block text-xs font-medium text-text-secondary mb-1.5">Color</label>
+          <input
+            id="color"
+            type="text"
+            formControlName="color"
+            placeholder="Blanco"
+            class="form-input"
+            [class.border-danger]="fieldError('color')"
+          />
+          @if (fieldError('color')) {
+            <p class="text-xs text-danger mt-1">{{ fieldError('color') }}</p>
+          }
+        </div>
+        <div>
+          <label for="initialKm" class="block text-xs font-medium text-text-secondary mb-1.5">Kilometraje actual <span class="text-danger">*</span></label>
+          <input
+            id="initialKm"
+            type="number"
+            formControlName="initialKm"
+            placeholder="35000"
+            min="0"
+            class="form-input"
+            [class.border-danger]="fieldError('initialKm')"
+          />
+          @if (fieldError('initialKm')) {
+            <p class="text-xs text-danger mt-1">{{ fieldError('initialKm') }}</p>
+          }
+        </div>
+      </div>
+
+      <!-- Error general -->
+      @if (generalError) {
+        <div class="flex items-center gap-2 text-sm text-danger mb-4 bg-danger-light px-3 py-2 rounded">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {{ generalError }}
+        </div>
+      }
+
+      <!-- Actions -->
+      <div class="flex gap-3 justify-end">
+        <button
+          type="button"
+          (click)="close.emit()"
+          [disabled]="loading"
+          class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-border
+                 rounded-md hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          [disabled]="loading"
+          class="px-5 py-2 text-sm font-semibold text-white bg-auth-accent rounded-md
+                 hover:bg-auth-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                 flex items-center gap-2"
+        >
+          @if (loading) {
+            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            Guardando...
+          } @else {
+            Agregar Vehículo
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
