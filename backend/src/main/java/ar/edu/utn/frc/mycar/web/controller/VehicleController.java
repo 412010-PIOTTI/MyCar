@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -97,5 +98,40 @@ public class VehicleController {
     @GetMapping
     public List<VehicleResponse> getAll(Authentication authentication) {
         return vehicleService.getAll(authentication.getName());
+    }
+
+    /**
+     * Returns a single vehicle by id, only if it belongs to the authenticated user.
+     *
+     * <p>Returns 404 for both "not found" and "belongs to another user" to avoid
+     * leaking the existence of other users' vehicles.
+     */
+    @Operation(
+            summary = "Get a vehicle by id",
+            description = """
+                    Returns the vehicle with the given id, provided it belongs to the \
+                    authenticated user. Returns 404 when the vehicle does not exist or \
+                    is owned by a different user."""
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Vehicle found and returned.",
+                    content = @Content(schema = @Schema(implementation = VehicleResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Missing or invalid JWT.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Vehicle not found or does not belong to the authenticated user.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            )
+    })
+    @GetMapping("/{id}")
+    public VehicleResponse getById(Authentication authentication, @PathVariable Long id) {
+        return vehicleService.getById(authentication.getName(), id);
     }
 }

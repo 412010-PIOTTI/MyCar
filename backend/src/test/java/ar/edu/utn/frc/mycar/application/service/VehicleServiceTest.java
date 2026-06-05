@@ -9,6 +9,7 @@ import ar.edu.utn.frc.mycar.web.dto.request.CreateVehicleRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.VehicleResponse;
 import ar.edu.utn.frc.mycar.web.exception.DuplicatePlateException;
 import ar.edu.utn.frc.mycar.web.exception.InvalidCredentialsException;
+import ar.edu.utn.frc.mycar.web.exception.VehicleNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -119,6 +120,46 @@ class VehicleServiceTest {
                 .isInstanceOf(InvalidCredentialsException.class);
 
         verify(vehicleRepository, never()).save(any());
+    }
+
+    // ── getById ───────────────────────────────────────────────────────────────
+
+    @Test
+    void getById_existingVehicleOwnedByUser_returnsResponse() {
+        Vehicle vehicle = Vehicle.builder()
+                .id(1L).owner(owner)
+                .plate("AB123CD").brand("Toyota").model("Corolla")
+                .year(2020).color("Blanco").currentKm(35000)
+                .createdAt(LocalDateTime.of(2025, 1, 1, 0, 0))
+                .build();
+
+        when(vehicleRepository.findByIdAndOwnerEmail(1L, OWNER_EMAIL))
+                .thenReturn(Optional.of(vehicle));
+
+        VehicleResponse response = vehicleService.getById(OWNER_EMAIL, 1L);
+
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.plate()).isEqualTo("AB123CD");
+    }
+
+    @Test
+    void getById_vehicleNotFound_throwsVehicleNotFoundException() {
+        when(vehicleRepository.findByIdAndOwnerEmail(99L, OWNER_EMAIL))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> vehicleService.getById(OWNER_EMAIL, 99L))
+                .isInstanceOf(VehicleNotFoundException.class)
+                .hasMessageContaining("99");
+    }
+
+    @Test
+    void getById_vehicleBelongsToAnotherUser_throwsVehicleNotFoundException() {
+        // findByIdAndOwnerEmail returns empty when the vehicle exists but owner doesn't match
+        when(vehicleRepository.findByIdAndOwnerEmail(1L, "other@example.com"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> vehicleService.getById("other@example.com", 1L))
+                .isInstanceOf(VehicleNotFoundException.class);
     }
 
     // ── getAll ────────────────────────────────────────────────────────────────

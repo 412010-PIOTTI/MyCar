@@ -6,6 +6,7 @@ import ar.edu.utn.frc.mycar.domain.enums.Role;
 import ar.edu.utn.frc.mycar.infrastructure.security.JwtService;
 import ar.edu.utn.frc.mycar.web.dto.response.VehicleResponse;
 import ar.edu.utn.frc.mycar.web.exception.DuplicatePlateException;
+import ar.edu.utn.frc.mycar.web.exception.VehicleNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -302,6 +303,49 @@ class VehicleControllerTest {
                                   "initialKm": 35000
                                 }
                                 """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ── GET /api/vehicles/{id} ────────────────────────────────────────────────
+
+    @Test
+    void getById_existingOwnedVehicle_returns200() throws Exception {
+        when(vehicleService.getById(USER_EMAIL, 1L)).thenReturn(VEHICLE_STUB);
+
+        mockMvc.perform(get("/api/vehicles/1")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.plate").value("AB123CD"))
+                .andExpect(jsonPath("$.brand").value("Toyota"))
+                .andExpect(jsonPath("$.currentKm").value(35000));
+    }
+
+    @Test
+    void getById_notFound_returns404() throws Exception {
+        when(vehicleService.getById(USER_EMAIL, 99L))
+                .thenThrow(new VehicleNotFoundException(99L));
+
+        mockMvc.perform(get("/api/vehicles/99")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value(
+                        "No se encontró un vehículo con id 99 asociado a tu cuenta."));
+    }
+
+    @Test
+    void getById_vehicleOfAnotherUser_returns404() throws Exception {
+        when(vehicleService.getById(USER_EMAIL, 2L))
+                .thenThrow(new VehicleNotFoundException(2L));
+
+        mockMvc.perform(get("/api/vehicles/2")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getById_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/api/vehicles/1"))
                 .andExpect(status().isUnauthorized());
     }
 

@@ -8,6 +8,7 @@ import ar.edu.utn.frc.mycar.web.dto.request.CreateVehicleRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.VehicleResponse;
 import ar.edu.utn.frc.mycar.web.exception.DuplicatePlateException;
 import ar.edu.utn.frc.mycar.web.exception.InvalidCredentialsException;
+import ar.edu.utn.frc.mycar.web.exception.VehicleNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,6 +61,24 @@ public class VehicleService {
                 .build();
 
         return toResponse(vehicleRepository.save(vehicle));
+    }
+
+    /**
+     * Returns a single vehicle by id, verifying it belongs to the authenticated user.
+     *
+     * <p>Returns 404 for both "vehicle does not exist" and "vehicle belongs to another user"
+     * so as not to leak the existence of other users' vehicles.
+     *
+     * @param ownerEmail email of the authenticated user (from JWT)
+     * @param id         vehicle primary key
+     * @return the matching {@link VehicleResponse}
+     * @throws VehicleNotFoundException if no vehicle with that id is owned by this user
+     */
+    @Transactional(readOnly = true)
+    public VehicleResponse getById(String ownerEmail, Long id) {
+        return vehicleRepository.findByIdAndOwnerEmail(id, ownerEmail)
+                .map(this::toResponse)
+                .orElseThrow(() -> new VehicleNotFoundException(id));
     }
 
     /**
