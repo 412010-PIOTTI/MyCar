@@ -17,9 +17,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -258,6 +261,42 @@ class VehicleControllerTest {
                                   "initialKm": 35000
                                 }
                                 """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ── GET /api/vehicles ─────────────────────────────────────────────────────
+
+    @Test
+    void getAll_authenticated_returnsVehicleList() throws Exception {
+        VehicleResponse second = new VehicleResponse(
+                2L, "BB222BB", "Honda", "Civic", 2021, null,
+                5000, LocalDateTime.of(2025, 6, 1, 0, 0));
+
+        when(vehicleService.getAll(USER_EMAIL)).thenReturn(List.of(second, VEHICLE_STUB));
+
+        mockMvc.perform(get("/api/vehicles")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(2))
+                .andExpect(jsonPath("$[0].plate").value("BB222BB"))
+                .andExpect(jsonPath("$[1].id").value(1))
+                .andExpect(jsonPath("$[1].plate").value("AB123CD"));
+    }
+
+    @Test
+    void getAll_noVehicles_returns200WithEmptyArray() throws Exception {
+        when(vehicleService.getAll(USER_EMAIL)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/vehicles")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void getAll_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/api/vehicles"))
                 .andExpect(status().isUnauthorized());
     }
 }

@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -118,5 +119,41 @@ class VehicleServiceTest {
                 .isInstanceOf(InvalidCredentialsException.class);
 
         verify(vehicleRepository, never()).save(any());
+    }
+
+    // ── getAll ────────────────────────────────────────────────────────────────
+
+    @Test
+    void getAll_ownerWithVehicles_returnsListOrderedByCreatedAtDesc() {
+        LocalDateTime older = LocalDateTime.of(2025, 1, 1, 0, 0);
+        LocalDateTime newer = LocalDateTime.of(2025, 6, 1, 0, 0);
+
+        Vehicle v1 = Vehicle.builder().id(1L).owner(owner)
+                .plate("AA111AA").brand("Toyota").model("Corolla").year(2020).currentKm(10000)
+                .createdAt(older).build();
+        Vehicle v2 = Vehicle.builder().id(2L).owner(owner)
+                .plate("BB222BB").brand("Honda").model("Civic").year(2021).currentKm(5000)
+                .createdAt(newer).build();
+
+        when(vehicleRepository.findByOwnerEmailOrderByCreatedAtDesc(OWNER_EMAIL))
+                .thenReturn(List.of(v2, v1));
+
+        List<VehicleResponse> result = vehicleService.getAll(OWNER_EMAIL);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).id()).isEqualTo(2L);
+        assertThat(result.get(0).plate()).isEqualTo("BB222BB");
+        assertThat(result.get(1).id()).isEqualTo(1L);
+        assertThat(result.get(1).plate()).isEqualTo("AA111AA");
+    }
+
+    @Test
+    void getAll_ownerWithNoVehicles_returnsEmptyList() {
+        when(vehicleRepository.findByOwnerEmailOrderByCreatedAtDesc(OWNER_EMAIL))
+                .thenReturn(List.of());
+
+        List<VehicleResponse> result = vehicleService.getAll(OWNER_EMAIL);
+
+        assertThat(result).isEmpty();
     }
 }

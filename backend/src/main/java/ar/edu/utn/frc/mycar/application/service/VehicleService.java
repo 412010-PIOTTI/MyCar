@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -59,6 +60,20 @@ public class VehicleService {
                 .build();
 
         return toResponse(vehicleRepository.save(vehicle));
+    }
+
+    /**
+     * Returns all vehicles owned by the authenticated user, ordered from newest to oldest.
+     *
+     * @param ownerEmail email of the authenticated user (from JWT)
+     * @return list of {@link VehicleResponse}; empty list if the user has no vehicles
+     */
+    @Transactional(readOnly = true)
+    public List<VehicleResponse> getAll(String ownerEmail) {
+        return vehicleRepository.findByOwnerEmailOrderByCreatedAtDesc(ownerEmail)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private VehicleResponse toResponse(Vehicle vehicle) {
