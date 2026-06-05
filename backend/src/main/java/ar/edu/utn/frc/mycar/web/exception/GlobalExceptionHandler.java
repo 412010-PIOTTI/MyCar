@@ -35,6 +35,12 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    /** Returns 409 when the plate is already registered in the system. */
+    @ExceptionHandler(DuplicatePlateException.class)
+    public ProblemDetail handleDuplicatePlate(DuplicatePlateException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
     /** Returns 401 when the email/password combination is invalid. */
     @ExceptionHandler(InvalidCredentialsException.class)
     public ProblemDetail handleInvalidCredentials(InvalidCredentialsException ex) {
