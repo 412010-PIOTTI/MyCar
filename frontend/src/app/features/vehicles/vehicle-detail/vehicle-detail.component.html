@@ -1,5 +1,85 @@
-<div class="p-6">
-  <a routerLink="/vehicles" class="text-blue-600 text-sm hover:underline">← Volver a vehículos</a>
-  <h1 class="text-2xl font-bold text-gray-900 mt-4">Detalle del vehículo</h1>
-  <p class="text-gray-500 text-sm mt-1">ID: {{ vehicleId }}</p>
+<div class="p-6 bg-surface min-h-full">
+
+  <!-- Back link -->
+  <a routerLink="/vehicles" class="inline-flex items-center gap-1.5 text-sm text-auth-accent hover:underline mb-6">
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    Mis Vehículos
+  </a>
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="animate-pulse space-y-4">
+      <div class="h-8 w-48 bg-gray-200 rounded"></div>
+      <div class="h-4 w-32 bg-gray-200 rounded"></div>
+      <div class="bg-white border border-surface-border rounded-md shadow-card p-6 space-y-4 mt-4">
+        <div class="grid grid-cols-2 gap-6">
+          @for (i of [1, 2, 3, 4]; track i) {
+            <div class="space-y-1.5">
+              <div class="h-2 w-16 bg-gray-200 rounded"></div>
+              <div class="h-5 w-28 bg-gray-200 rounded"></div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Not found -->
+  @if (!loading && notFound) {
+    <div class="flex flex-col items-center justify-center py-20 text-center">
+      <svg class="w-12 h-12 text-text-muted mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p class="text-text-primary font-medium mb-1">Vehículo no encontrado</p>
+      <p class="text-text-secondary text-sm mb-4">No existe o no tenés acceso a este vehículo.</p>
+      <a routerLink="/vehicles" class="text-sm font-medium text-auth-accent hover:underline">
+        Volver a Mis Vehículos
+      </a>
+    </div>
+  }
+
+  <!-- Vehicle detail -->
+  @if (!loading && !notFound && vehicle) {
+    <!-- Page header -->
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-[#0b1c30]">{{ vehicle.brand }} {{ vehicle.model }}</h1>
+      <p class="text-sm text-text-secondary mt-1">Registrado el {{ vehicle.createdAt | date:'dd/MM/yyyy' }}</p>
+    </div>
+
+    <!-- Info card -->
+    <div class="bg-white border border-surface-border rounded-md shadow-card p-6">
+      <h2 class="text-sm font-semibold text-text-primary mb-4">Datos del vehículo</h2>
+
+      <div class="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-3">
+        <div>
+          <p class="text-[10px] font-normal text-text-secondary uppercase tracking-widest mb-1">Patente</p>
+          <p class="text-base font-bold text-auth-accent">{{ vehicle.plate }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] font-normal text-text-secondary uppercase tracking-widest mb-1">Año</p>
+          <p class="text-base font-semibold text-[#0b1c30]">{{ vehicle.year }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] font-normal text-text-secondary uppercase tracking-widest mb-1">Marca</p>
+          <p class="text-base font-semibold text-[#0b1c30]">{{ vehicle.brand }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] font-normal text-text-secondary uppercase tracking-widest mb-1">Modelo</p>
+          <p class="text-base font-semibold text-[#0b1c30]">{{ vehicle.model }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] font-normal text-text-secondary uppercase tracking-widest mb-1">Color</p>
+          <p class="text-base font-semibold text-[#0b1c30]">{{ vehicle.color || '—' }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] font-normal text-text-secondary uppercase tracking-widest mb-1">KM Actual</p>
+          <p class="text-base font-semibold text-[#0b1c30]">{{ vehicle.currentKm | number }} km</p>
+        </div>
+      </div>
+    </div>
+  }
+
 </div>
