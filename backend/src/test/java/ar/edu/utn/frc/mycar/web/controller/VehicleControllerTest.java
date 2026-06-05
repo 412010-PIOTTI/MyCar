@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
+import java.time.Year;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -211,6 +212,46 @@ class VehicleControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.year").exists());
+    }
+
+    @Test
+    void register_yearIsCurrentYear_returns201() throws Exception {
+        int currentYear = Year.now().getValue();
+        when(vehicleService.register(eq(USER_EMAIL), any())).thenReturn(VEHICLE_STUB);
+
+        mockMvc.perform(post("/api/vehicles")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "plate": "AB123CD",
+                                  "brand": "Toyota",
+                                  "model": "Corolla",
+                                  "year": %d,
+                                  "initialKm": 35000
+                                }
+                                """.formatted(currentYear)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void register_yearInFuture_returns400WithFieldError() throws Exception {
+        int nextYear = Year.now().getValue() + 1;
+
+        mockMvc.perform(post("/api/vehicles")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "plate": "AB123CD",
+                                  "brand": "Toyota",
+                                  "model": "Corolla",
+                                  "year": %d,
+                                  "initialKm": 35000
+                                }
+                                """.formatted(nextYear)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.year").value("El año no puede ser posterior al año actual"));
     }
 
     @Test
