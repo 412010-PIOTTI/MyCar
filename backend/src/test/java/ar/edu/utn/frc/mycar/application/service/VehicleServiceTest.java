@@ -3,7 +3,6 @@ package ar.edu.utn.frc.mycar.application.service;
 import ar.edu.utn.frc.mycar.domain.entity.User;
 import ar.edu.utn.frc.mycar.domain.entity.Vehicle;
 import ar.edu.utn.frc.mycar.domain.enums.Role;
-import ar.edu.utn.frc.mycar.domain.repository.UserRepository;
 import ar.edu.utn.frc.mycar.domain.repository.VehicleRepository;
 import ar.edu.utn.frc.mycar.web.dto.request.CreateVehicleRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.VehicleResponse;
@@ -32,7 +31,7 @@ import static org.mockito.Mockito.when;
 class VehicleServiceTest {
 
     @Mock VehicleRepository vehicleRepository;
-    @Mock UserRepository userRepository;
+    @Mock UserService userService;
 
     @InjectMocks VehicleService vehicleService;
 
@@ -67,7 +66,7 @@ class VehicleServiceTest {
                 .build();
 
         when(vehicleRepository.existsByPlate("AB123CD")).thenReturn(false);
-        when(userRepository.findByEmail(OWNER_EMAIL)).thenReturn(Optional.of(owner));
+        when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
         when(vehicleRepository.save(any(Vehicle.class))).thenReturn(saved);
 
         VehicleResponse response = vehicleService.register(OWNER_EMAIL, validRequest);
@@ -89,7 +88,7 @@ class VehicleServiceTest {
     void register_plateLowercase_isNormalisedToUppercaseBeforeCheck() {
         // Plate provided in lowercase; existsByPlate must be called with the upper-cased value
         when(vehicleRepository.existsByPlate("AB123CD")).thenReturn(false);
-        when(userRepository.findByEmail(OWNER_EMAIL)).thenReturn(Optional.of(owner));
+        when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
         when(vehicleRepository.save(any(Vehicle.class))).thenReturn(
                 Vehicle.builder().id(2L).plate("AB123CD").brand("Toyota")
                         .model("Corolla").year(2020).currentKm(0).owner(owner).build());
@@ -107,14 +106,14 @@ class VehicleServiceTest {
                 .isInstanceOf(DuplicatePlateException.class)
                 .hasMessageContaining("AB123CD");
 
-        verify(userRepository, never()).findByEmail(any());
+        verify(userService, never()).getEntity(any());
         verify(vehicleRepository, never()).save(any());
     }
 
     @Test
     void register_ownerNotFound_throwsInvalidCredentialsException() {
         when(vehicleRepository.existsByPlate("AB123CD")).thenReturn(false);
-        when(userRepository.findByEmail(OWNER_EMAIL)).thenReturn(Optional.empty());
+        when(userService.getEntity(OWNER_EMAIL)).thenThrow(new InvalidCredentialsException());
 
         assertThatThrownBy(() -> vehicleService.register(OWNER_EMAIL, validRequest))
                 .isInstanceOf(InvalidCredentialsException.class);

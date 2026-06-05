@@ -2,12 +2,10 @@ package ar.edu.utn.frc.mycar.application.service;
 
 import ar.edu.utn.frc.mycar.domain.entity.User;
 import ar.edu.utn.frc.mycar.domain.entity.Vehicle;
-import ar.edu.utn.frc.mycar.domain.repository.UserRepository;
 import ar.edu.utn.frc.mycar.domain.repository.VehicleRepository;
 import ar.edu.utn.frc.mycar.web.dto.request.CreateVehicleRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.VehicleResponse;
 import ar.edu.utn.frc.mycar.web.exception.DuplicatePlateException;
-import ar.edu.utn.frc.mycar.web.exception.InvalidCredentialsException;
 import ar.edu.utn.frc.mycar.web.exception.VehicleNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,7 +23,7 @@ import java.util.Locale;
 public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     /**
      * Registers a new vehicle for the authenticated user.
@@ -36,8 +34,7 @@ public class VehicleService {
      * @param ownerEmail email of the authenticated user (from JWT)
      * @param request    validated vehicle data from the request body
      * @return a read-only {@link VehicleResponse} representing the persisted vehicle
-     * @throws DuplicatePlateException      if the plate is already registered
-     * @throws InvalidCredentialsException  if no active user matches {@code ownerEmail}
+     * @throws DuplicatePlateException if the plate is already registered
      */
     @Transactional
     public VehicleResponse register(String ownerEmail, CreateVehicleRequest request) {
@@ -47,8 +44,7 @@ public class VehicleService {
             throw new DuplicatePlateException(normalizedPlate);
         }
 
-        User owner = userRepository.findByEmail(ownerEmail)
-                .orElseThrow(InvalidCredentialsException::new);
+        User owner = userService.getEntity(ownerEmail);
 
         Vehicle vehicle = Vehicle.builder()
                 .owner(owner)
