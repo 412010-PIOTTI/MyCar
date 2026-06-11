@@ -2,6 +2,7 @@ package ar.edu.utn.frc.mycar.web.controller;
 
 import ar.edu.utn.frc.mycar.application.service.VehicleService;
 import ar.edu.utn.frc.mycar.web.dto.request.CreateVehicleRequest;
+import ar.edu.utn.frc.mycar.web.dto.request.UpdateVehicleRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.VehicleResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,9 +15,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -76,12 +79,93 @@ public class VehicleController {
     }
 
     /**
-     * Returns all vehicles that belong to the authenticated user, ordered from newest to oldest.
+     * Updates the mutable fields of a vehicle owned by the authenticated user.
+     *
+     * <p>All request fields are optional. Omitted or {@code null} fields are left unchanged.
+     * Returns 404 when the vehicle does not exist, belongs to another user, or is deleted.
+     */
+    @Operation(
+            summary = "Update a vehicle",
+            description = """
+                    Updates one or more fields of the vehicle with the given id, provided it \
+                    belongs to the authenticated user and is not deleted. All fields are optional \
+                    — omitted or null fields are left unchanged. The plate is normalised to \
+                    upper-case and must remain globally unique."""
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Vehicle updated successfully.",
+                    content = @Content(schema = @Schema(implementation = VehicleResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Validation failed (invalid field values).",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Missing or invalid JWT.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Vehicle not found or does not belong to the authenticated user.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "The new plate is already registered by another vehicle.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            )
+    })
+    @PutMapping("/{id}")
+    public VehicleResponse update(Authentication authentication,
+                                  @PathVariable Long id,
+                                  @RequestBody @Valid UpdateVehicleRequest request) {
+        return vehicleService.update(authentication.getName(), id, request);
+    }
+
+    /**
+     * Soft-deletes a vehicle owned by the authenticated user.
+     *
+     * <p>Sets the vehicle's {@code active} flag to {@code false}. The vehicle is immediately
+     * removed from all listings and becomes inaccessible via other endpoints.
+     * Returns 404 when the vehicle does not exist, belongs to another user, or is already deleted.
+     */
+    @Operation(
+            summary = "Delete a vehicle",
+            description = """
+                    Soft-deletes the vehicle with the given id by setting its active flag to false. \
+                    The vehicle is immediately removed from all listings. Returns 404 when the vehicle \
+                    does not exist, belongs to another user, or is already deleted."""
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Vehicle deleted successfully."),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Missing or invalid JWT.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Vehicle not found or does not belong to the authenticated user.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            )
+    })
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(Authentication authentication, @PathVariable Long id) {
+        vehicleService.delete(authentication.getName(), id);
+    }
+
+    /**
+     * Returns all active vehicles that belong to the authenticated user, ordered from newest to oldest.
      * Returns an empty array if the user has no registered vehicles.
      */
     @Operation(
             summary = "List my vehicles",
-            description = "Returns all vehicles registered under the authenticated user's account, ordered by registration date (newest first). Returns an empty array when no vehicles exist."
+            description = "Returns all active vehicles registered under the authenticated user's account, ordered by registration date (newest first). Returns an empty array when no vehicles exist."
     )
     @ApiResponses({
             @ApiResponse(
@@ -101,17 +185,17 @@ public class VehicleController {
     }
 
     /**
-     * Returns a single vehicle by id, only if it belongs to the authenticated user.
+     * Returns a single active vehicle by id, only if it belongs to the authenticated user.
      *
-     * <p>Returns 404 for both "not found" and "belongs to another user" to avoid
-     * leaking the existence of other users' vehicles.
+     * <p>Returns 404 for "not found", "belongs to another user", and "soft-deleted"
+     * to avoid leaking the existence of other users' vehicles.
      */
     @Operation(
             summary = "Get a vehicle by id",
             description = """
                     Returns the vehicle with the given id, provided it belongs to the \
-                    authenticated user. Returns 404 when the vehicle does not exist or \
-                    is owned by a different user."""
+                    authenticated user and is not deleted. Returns 404 when the vehicle \
+                    does not exist, is owned by a different user, or has been deleted."""
     )
     @ApiResponses({
             @ApiResponse(

@@ -17,15 +17,18 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-
 import java.time.Year;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -303,6 +306,171 @@ class VehicleControllerTest {
                                   "initialKm": 35000
                                 }
                                 """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ── PUT /api/vehicles/{id} ────────────────────────────────────────────────
+
+    @Test
+    void update_validRequest_returns200WithUpdatedResponse() throws Exception {
+        VehicleResponse updated = new VehicleResponse(
+                1L, "XX999YY", "Honda", "Civic", 2022, "Negro",
+                35000, LocalDateTime.of(2025, 1, 1, 0, 0));
+
+        when(vehicleService.update(eq(USER_EMAIL), eq(1L), any())).thenReturn(updated);
+
+        mockMvc.perform(put("/api/vehicles/1")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "plate": "XX999YY",
+                                  "brand": "Honda",
+                                  "model": "Civic",
+                                  "year": 2022,
+                                  "color": "Negro"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.plate").value("XX999YY"))
+                .andExpect(jsonPath("$.brand").value("Honda"))
+                .andExpect(jsonPath("$.model").value("Civic"))
+                .andExpect(jsonPath("$.year").value(2022))
+                .andExpect(jsonPath("$.color").value("Negro"));
+    }
+
+    @Test
+    void update_partialRequest_onlyBrand_returns200() throws Exception {
+        VehicleResponse updated = new VehicleResponse(
+                1L, "AB123CD", "Ford", "Corolla", 2020, "Blanco",
+                35000, LocalDateTime.of(2025, 1, 1, 0, 0));
+
+        when(vehicleService.update(eq(USER_EMAIL), eq(1L), any())).thenReturn(updated);
+
+        mockMvc.perform(put("/api/vehicles/1")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "brand": "Ford" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.brand").value("Ford"))
+                .andExpect(jsonPath("$.plate").value("AB123CD"));
+    }
+
+    @Test
+    void update_notFound_returns404() throws Exception {
+        when(vehicleService.update(eq(USER_EMAIL), eq(99L), any()))
+                .thenThrow(new VehicleNotFoundException(99L));
+
+        mockMvc.perform(put("/api/vehicles/99")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "brand": "Ford" }
+                                """))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value(
+                        "No se encontró un vehículo con id 99 asociado a tu cuenta."));
+    }
+
+    @Test
+    void update_duplicatePlate_returns409() throws Exception {
+        when(vehicleService.update(eq(USER_EMAIL), eq(1L), any()))
+                .thenThrow(new DuplicatePlateException("TAKEN01"));
+
+        mockMvc.perform(put("/api/vehicles/1")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "plate": "TAKEN01" }
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("La patente 'TAKEN01' ya está registrada en el sistema."));
+    }
+
+    @Test
+    void update_plateTooLong_returns400WithFieldError() throws Exception {
+        mockMvc.perform(put("/api/vehicles/1")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "plate": "TOOLONGPLATE" }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.plate").exists());
+    }
+
+    @Test
+    void update_yearInFuture_returns400WithFieldError() throws Exception {
+        int nextYear = Year.now().getValue() + 1;
+
+        mockMvc.perform(put("/api/vehicles/1")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "year": %d }
+                                """.formatted(nextYear)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.year").exists());
+    }
+
+    @Test
+    void update_yearTooLow_returns400WithFieldError() throws Exception {
+        mockMvc.perform(put("/api/vehicles/1")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "year": 1800 }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.year").exists());
+    }
+
+    @Test
+    void update_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(put("/api/vehicles/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "brand": "Ford" }
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ── DELETE /api/vehicles/{id} ─────────────────────────────────────────────
+
+    @Test
+    void delete_existingVehicle_returns204() throws Exception {
+        doNothing().when(vehicleService).delete(USER_EMAIL, 1L);
+
+        mockMvc.perform(delete("/api/vehicles/1")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void delete_notFound_returns404() throws Exception {
+        doThrow(new VehicleNotFoundException(99L)).when(vehicleService).delete(USER_EMAIL, 99L);
+
+        mockMvc.perform(delete("/api/vehicles/99")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value(
+                        "No se encontró un vehículo con id 99 asociado a tu cuenta."));
+    }
+
+    @Test
+    void delete_vehicleOfAnotherUser_returns404() throws Exception {
+        doThrow(new VehicleNotFoundException(2L)).when(vehicleService).delete(USER_EMAIL, 2L);
+
+        mockMvc.perform(delete("/api/vehicles/2")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void delete_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(delete("/api/vehicles/1"))
                 .andExpect(status().isUnauthorized());
     }
 
