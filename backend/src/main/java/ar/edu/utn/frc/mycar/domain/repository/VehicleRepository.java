@@ -24,6 +24,4 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
      */
     boolean existsByPlateAndActiveTrueAndIdNot(String plate, Long excludedId);
 
-    /** Returns {@code true} if an active vehicle with the given id is owned by the user. */
-    boolean existsByIdAndOwnerEmailAndActiveTrue(Long id, String ownerEmail);
 }

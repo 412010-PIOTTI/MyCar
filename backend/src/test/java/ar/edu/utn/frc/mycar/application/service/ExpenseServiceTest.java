@@ -7,11 +7,9 @@ import ar.edu.utn.frc.mycar.domain.enums.ExpenseCategory;
 import ar.edu.utn.frc.mycar.domain.enums.ExpenseStatus;
 import ar.edu.utn.frc.mycar.domain.enums.Role;
 import ar.edu.utn.frc.mycar.domain.repository.ExpenseRepository;
-import ar.edu.utn.frc.mycar.domain.repository.VehicleRepository;
 import ar.edu.utn.frc.mycar.web.dto.request.CreateExpenseRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.ExpenseResponse;
 import ar.edu.utn.frc.mycar.web.dto.response.ExpenseSummaryResponse;
-import ar.edu.utn.frc.mycar.web.dto.response.MonthlyTotalResponse;
 import ar.edu.utn.frc.mycar.web.exception.ExpenseNotFoundException;
 import ar.edu.utn.frc.mycar.web.exception.VehicleNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,14 +28,13 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ExpenseServiceTest {
 
     @Mock ExpenseRepository expenseRepository;
-    @Mock VehicleRepository vehicleRepository;
+    @Mock VehicleService vehicleService;
     @Mock UserService userService;
 
     @InjectMocks ExpenseService expenseService;
@@ -90,8 +87,7 @@ class ExpenseServiceTest {
     @Test
     void create_withKmGreaterThanCurrent_updatesVehicleKm() {
         int newKm = CURRENT_KM + 5000;
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(vehicle));
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
         when(expenseRepository.save(any(Expense.class))).thenReturn(buildExpense(newKm));
 
@@ -102,8 +98,7 @@ class ExpenseServiceTest {
 
     @Test
     void create_withKmEqualToCurrent_doesNotUpdateVehicleKm() {
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(vehicle));
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
         when(expenseRepository.save(any(Expense.class))).thenReturn(buildExpense(CURRENT_KM));
 
@@ -115,8 +110,7 @@ class ExpenseServiceTest {
     @Test
     void create_withKmLessThanCurrent_doesNotUpdateVehicleKm() {
         int lowerKm = CURRENT_KM - 1000;
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(vehicle));
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
         when(expenseRepository.save(any(Expense.class))).thenReturn(buildExpense(lowerKm));
 
@@ -127,8 +121,7 @@ class ExpenseServiceTest {
 
     @Test
     void create_withNullKm_doesNotUpdateVehicleKm() {
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(vehicle));
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
         when(expenseRepository.save(any(Expense.class))).thenReturn(buildExpense(null));
 
@@ -139,8 +132,8 @@ class ExpenseServiceTest {
 
     @Test
     void create_vehicleNotFound_throwsVehicleNotFoundException() {
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.empty());
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL))
+                .thenThrow(new VehicleNotFoundException(VEHICLE_ID));
 
         assertThatThrownBy(() -> expenseService.create(OWNER_EMAIL, VEHICLE_ID, buildRequest(35000)))
                 .isInstanceOf(VehicleNotFoundException.class);
@@ -152,60 +145,48 @@ class ExpenseServiceTest {
 
     @Test
     void create_withExpiryDateInFarFuture_statusIsVigente() {
-        LocalDate farFuture = LocalDate.now().plusDays(60);
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(vehicle));
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
-        when(expenseRepository.save(any(Expense.class))).thenReturn(buildExpense(null, farFuture));
+        when(expenseRepository.save(any(Expense.class))).thenReturn(buildExpense(null, LocalDate.now().plusDays(60)));
 
-        ExpenseResponse response = expenseService.create(OWNER_EMAIL, VEHICLE_ID, buildRequest(null));
-
-        assertThat(response.status()).isEqualTo(ExpenseStatus.VIGENTE);
+        assertThat(expenseService.create(OWNER_EMAIL, VEHICLE_ID, buildRequest(null)).status())
+                .isEqualTo(ExpenseStatus.VIGENTE);
     }
 
     @Test
     void create_withExpiryDateIn15Days_statusIsPorVencer() {
-        LocalDate soon = LocalDate.now().plusDays(15);
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(vehicle));
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
-        when(expenseRepository.save(any(Expense.class))).thenReturn(buildExpense(null, soon));
+        when(expenseRepository.save(any(Expense.class))).thenReturn(buildExpense(null, LocalDate.now().plusDays(15)));
 
-        ExpenseResponse response = expenseService.create(OWNER_EMAIL, VEHICLE_ID, buildRequest(null));
-
-        assertThat(response.status()).isEqualTo(ExpenseStatus.POR_VENCER);
+        assertThat(expenseService.create(OWNER_EMAIL, VEHICLE_ID, buildRequest(null)).status())
+                .isEqualTo(ExpenseStatus.POR_VENCER);
     }
 
     @Test
     void create_withPastExpiryDate_statusIsVencido() {
-        LocalDate past = LocalDate.now().minusDays(5);
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(vehicle));
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
-        when(expenseRepository.save(any(Expense.class))).thenReturn(buildExpense(null, past));
+        when(expenseRepository.save(any(Expense.class))).thenReturn(buildExpense(null, LocalDate.now().minusDays(5)));
 
-        ExpenseResponse response = expenseService.create(OWNER_EMAIL, VEHICLE_ID, buildRequest(null));
-
-        assertThat(response.status()).isEqualTo(ExpenseStatus.VENCIDO);
+        assertThat(expenseService.create(OWNER_EMAIL, VEHICLE_ID, buildRequest(null)).status())
+                .isEqualTo(ExpenseStatus.VENCIDO);
     }
 
     @Test
     void create_withNoExpiryDate_statusIsNull() {
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(vehicle));
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
         when(expenseRepository.save(any(Expense.class))).thenReturn(buildExpense(null, null));
 
-        ExpenseResponse response = expenseService.create(OWNER_EMAIL, VEHICLE_ID, buildRequest(null));
-
-        assertThat(response.status()).isNull();
+        assertThat(expenseService.create(OWNER_EMAIL, VEHICLE_ID, buildRequest(null)).status()).isNull();
     }
 
     // ── getAll ────────────────────────────────────────────────────────────────
 
     @Test
     void getAll_noCategoryFilter_returnsAllExpenses() {
-        when(vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL)).thenReturn(true);
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(expenseRepository.findByVehicleIdAndVehicleOwnerEmailOrderByDateDescIdDesc(VEHICLE_ID, OWNER_EMAIL))
                 .thenReturn(List.of(buildExpense(CURRENT_KM)));
 
@@ -218,7 +199,7 @@ class ExpenseServiceTest {
 
     @Test
     void getAll_withCategoryFilter_delegatesToFilteredQuery() {
-        when(vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL)).thenReturn(true);
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(expenseRepository.findByVehicleIdAndVehicleOwnerEmailAndCategoryOrderByDateDescIdDesc(
                 VEHICLE_ID, OWNER_EMAIL, ExpenseCategory.OPERATIVO))
                 .thenReturn(List.of(buildExpense(CURRENT_KM)));
@@ -232,7 +213,8 @@ class ExpenseServiceTest {
 
     @Test
     void getAll_vehicleNotFound_throwsVehicleNotFoundException() {
-        when(vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL)).thenReturn(false);
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL))
+                .thenThrow(new VehicleNotFoundException(VEHICLE_ID));
 
         assertThatThrownBy(() -> expenseService.getAll(OWNER_EMAIL, VEHICLE_ID, null))
                 .isInstanceOf(VehicleNotFoundException.class);
@@ -242,7 +224,7 @@ class ExpenseServiceTest {
 
     @Test
     void getSummary_withPreviousMonthData_computesPercentageChange() {
-        when(vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL)).thenReturn(true);
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(expenseRepository.sumByVehicleAndYearMonth(VEHICLE_ID, OWNER_EMAIL, 2024, 6))
                 .thenReturn(new BigDecimal("110000"));
         when(expenseRepository.sumByVehicleAndYearMonth(VEHICLE_ID, OWNER_EMAIL, 2024, 5))
@@ -258,7 +240,7 @@ class ExpenseServiceTest {
 
     @Test
     void getSummary_withNoPreviousMonth_percentageChangeIsNull() {
-        when(vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL)).thenReturn(true);
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(expenseRepository.sumByVehicleAndYearMonth(VEHICLE_ID, OWNER_EMAIL, 2024, 1))
                 .thenReturn(new BigDecimal("50000"));
         when(expenseRepository.sumByVehicleAndYearMonth(VEHICLE_ID, OWNER_EMAIL, 2023, 12))
@@ -275,18 +257,16 @@ class ExpenseServiceTest {
 
     @Test
     void getById_existingExpense_returnsResponse() {
-        when(vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL)).thenReturn(true);
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(expenseRepository.findByIdAndVehicleIdAndVehicleOwnerEmail(10L, VEHICLE_ID, OWNER_EMAIL))
                 .thenReturn(Optional.of(buildExpense(CURRENT_KM)));
 
-        ExpenseResponse response = expenseService.getById(OWNER_EMAIL, VEHICLE_ID, 10L);
-
-        assertThat(response.id()).isEqualTo(10L);
+        assertThat(expenseService.getById(OWNER_EMAIL, VEHICLE_ID, 10L).id()).isEqualTo(10L);
     }
 
     @Test
     void getById_expenseNotFound_throwsExpenseNotFoundException() {
-        when(vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL)).thenReturn(true);
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(expenseRepository.findByIdAndVehicleIdAndVehicleOwnerEmail(99L, VEHICLE_ID, OWNER_EMAIL))
                 .thenReturn(Optional.empty());
 

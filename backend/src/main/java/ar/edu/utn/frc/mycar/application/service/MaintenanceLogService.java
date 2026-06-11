@@ -4,11 +4,9 @@ import ar.edu.utn.frc.mycar.domain.entity.MaintenanceLog;
 import ar.edu.utn.frc.mycar.domain.entity.User;
 import ar.edu.utn.frc.mycar.domain.entity.Vehicle;
 import ar.edu.utn.frc.mycar.domain.repository.MaintenanceLogRepository;
-import ar.edu.utn.frc.mycar.domain.repository.VehicleRepository;
 import ar.edu.utn.frc.mycar.web.dto.request.CreateMaintenanceLogRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.MaintenanceLogResponse;
 import ar.edu.utn.frc.mycar.web.exception.MaintenanceLogNotFoundException;
-import ar.edu.utn.frc.mycar.web.exception.VehicleNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,13 +18,12 @@ import java.util.List;
 public class MaintenanceLogService {
 
     private final MaintenanceLogRepository maintenanceLogRepository;
-    private final VehicleRepository vehicleRepository;
+    private final VehicleService vehicleService;
     private final UserService userService;
 
     @Transactional
     public MaintenanceLogResponse create(String ownerEmail, Long vehicleId, CreateMaintenanceLogRequest request) {
-        Vehicle vehicle = vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(vehicleId, ownerEmail)
-                .orElseThrow(() -> new VehicleNotFoundException(vehicleId));
+        Vehicle vehicle = vehicleService.getEntity(vehicleId, ownerEmail);
 
         if (request.getKmAtMaintenance() > vehicle.getCurrentKm()) {
             vehicle.setCurrentKm(request.getKmAtMaintenance());
@@ -48,9 +45,7 @@ public class MaintenanceLogService {
 
     @Transactional(readOnly = true)
     public List<MaintenanceLogResponse> getAll(String ownerEmail, Long vehicleId) {
-        if (!vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(vehicleId, ownerEmail)) {
-            throw new VehicleNotFoundException(vehicleId);
-        }
+        vehicleService.getEntity(vehicleId, ownerEmail);
         return maintenanceLogRepository
                 .findByVehicleIdAndVehicleOwnerEmailOrderByDateDescIdDesc(vehicleId, ownerEmail)
                 .stream()
@@ -60,9 +55,7 @@ public class MaintenanceLogService {
 
     @Transactional(readOnly = true)
     public MaintenanceLogResponse getById(String ownerEmail, Long vehicleId, Long logId) {
-        if (!vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(vehicleId, ownerEmail)) {
-            throw new VehicleNotFoundException(vehicleId);
-        }
+        vehicleService.getEntity(vehicleId, ownerEmail);
         return maintenanceLogRepository
                 .findByIdAndVehicleIdAndVehicleOwnerEmail(logId, vehicleId, ownerEmail)
                 .map(this::toResponse)

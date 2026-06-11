@@ -156,6 +156,12 @@ public class VehicleService {
                 .toList();
     }
 
+    /** Returns the vehicle entity for internal use by other services. Throws 404 if not found or not owned. */
+    public Vehicle getEntity(Long id, String ownerEmail) {
+        return vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(id, ownerEmail)
+                .orElseThrow(() -> new VehicleNotFoundException(id));
+    }
+
     private VehicleResponse toResponse(Vehicle vehicle) {
         return new VehicleResponse(
                 vehicle.getId(),

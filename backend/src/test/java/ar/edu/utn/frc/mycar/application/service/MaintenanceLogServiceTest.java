@@ -6,7 +6,6 @@ import ar.edu.utn.frc.mycar.domain.entity.Vehicle;
 import ar.edu.utn.frc.mycar.domain.enums.MaintenanceType;
 import ar.edu.utn.frc.mycar.domain.enums.Role;
 import ar.edu.utn.frc.mycar.domain.repository.MaintenanceLogRepository;
-import ar.edu.utn.frc.mycar.domain.repository.VehicleRepository;
 import ar.edu.utn.frc.mycar.web.dto.request.CreateMaintenanceLogRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.MaintenanceLogResponse;
 import ar.edu.utn.frc.mycar.web.exception.MaintenanceLogNotFoundException;
@@ -32,7 +31,7 @@ import static org.mockito.Mockito.*;
 class MaintenanceLogServiceTest {
 
     @Mock MaintenanceLogRepository maintenanceLogRepository;
-    @Mock VehicleRepository vehicleRepository;
+    @Mock VehicleService vehicleService;
     @Mock UserService userService;
 
     @InjectMocks MaintenanceLogService maintenanceLogService;
@@ -78,8 +77,7 @@ class MaintenanceLogServiceTest {
     @Test
     void create_withKmGreaterThanCurrent_updatesVehicleKm() {
         int newKm = CURRENT_KM + 5000;
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(vehicle));
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
         when(maintenanceLogRepository.save(any(MaintenanceLog.class))).thenReturn(buildLog(newKm));
 
@@ -90,8 +88,7 @@ class MaintenanceLogServiceTest {
 
     @Test
     void create_withKmEqualToCurrent_doesNotUpdateVehicleKm() {
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(vehicle));
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
         when(maintenanceLogRepository.save(any(MaintenanceLog.class))).thenReturn(buildLog(CURRENT_KM));
 
@@ -103,8 +100,7 @@ class MaintenanceLogServiceTest {
     @Test
     void create_withKmLessThanCurrent_doesNotUpdateVehicleKm() {
         int lowerKm = CURRENT_KM - 1000;
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(vehicle));
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
         when(maintenanceLogRepository.save(any(MaintenanceLog.class))).thenReturn(buildLog(lowerKm));
 
@@ -115,8 +111,8 @@ class MaintenanceLogServiceTest {
 
     @Test
     void create_vehicleNotFound_throwsVehicleNotFoundException() {
-        when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.empty());
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL))
+                .thenThrow(new VehicleNotFoundException(VEHICLE_ID));
 
         assertThatThrownBy(() -> maintenanceLogService.create(OWNER_EMAIL, VEHICLE_ID, buildRequest(35000)))
                 .isInstanceOf(VehicleNotFoundException.class);
@@ -128,18 +124,17 @@ class MaintenanceLogServiceTest {
 
     @Test
     void getAll_existingVehicle_returnsList() {
-        when(vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL)).thenReturn(true);
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(maintenanceLogRepository.findByVehicleIdAndVehicleOwnerEmailOrderByDateDescIdDesc(VEHICLE_ID, OWNER_EMAIL))
                 .thenReturn(List.of(buildLog(CURRENT_KM)));
 
-        List<MaintenanceLogResponse> result = maintenanceLogService.getAll(OWNER_EMAIL, VEHICLE_ID);
-
-        assertThat(result).hasSize(1);
+        assertThat(maintenanceLogService.getAll(OWNER_EMAIL, VEHICLE_ID)).hasSize(1);
     }
 
     @Test
     void getAll_vehicleNotFound_throwsVehicleNotFoundException() {
-        when(vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL)).thenReturn(false);
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL))
+                .thenThrow(new VehicleNotFoundException(VEHICLE_ID));
 
         assertThatThrownBy(() -> maintenanceLogService.getAll(OWNER_EMAIL, VEHICLE_ID))
                 .isInstanceOf(VehicleNotFoundException.class);
@@ -149,19 +144,16 @@ class MaintenanceLogServiceTest {
 
     @Test
     void getById_existingLog_returnsResponse() {
-        MaintenanceLog log = buildLog(CURRENT_KM);
-        when(vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL)).thenReturn(true);
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(maintenanceLogRepository.findByIdAndVehicleIdAndVehicleOwnerEmail(20L, VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(log));
+                .thenReturn(Optional.of(buildLog(CURRENT_KM)));
 
-        MaintenanceLogResponse response = maintenanceLogService.getById(OWNER_EMAIL, VEHICLE_ID, 20L);
-
-        assertThat(response.id()).isEqualTo(20L);
+        assertThat(maintenanceLogService.getById(OWNER_EMAIL, VEHICLE_ID, 20L).id()).isEqualTo(20L);
     }
 
     @Test
     void getById_logNotFound_throwsMaintenanceLogNotFoundException() {
-        when(vehicleRepository.existsByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL)).thenReturn(true);
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(maintenanceLogRepository.findByIdAndVehicleIdAndVehicleOwnerEmail(99L, VEHICLE_ID, OWNER_EMAIL))
                 .thenReturn(Optional.empty());
 
