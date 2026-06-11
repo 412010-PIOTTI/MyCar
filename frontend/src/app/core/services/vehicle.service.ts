@@ -23,6 +23,14 @@ export interface CreateVehicleRequest {
   initialKm: number;
 }
 
+export interface UpdateVehicleRequest {
+  plate?: string | null;
+  brand?: string | null;
+  model?: string | null;
+  year?: number | null;
+  color?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class VehicleService {
   private readonly apiUrl = `${environment.apiUrl}/vehicles`;
@@ -39,5 +47,13 @@ export class VehicleService {
 
   createVehicle(data: CreateVehicleRequest): Observable<Vehicle> {
     return this.http.post<Vehicle>(this.apiUrl, data);
+  }
+
+  updateVehicle(id: number, data: UpdateVehicleRequest): Observable<Vehicle> {
+    return this.http.put<Vehicle>(`${this.apiUrl}/${id}`, data);
+  }
+
+  deleteVehicle(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }
