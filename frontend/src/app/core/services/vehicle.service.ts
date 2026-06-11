@@ -2,34 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-
-export interface Vehicle {
-  id: number;
-  plate: string;
-  brand: string;
-  model: string;
-  year: number;
-  color: string | null;
-  currentKm: number;
-  createdAt: string;
-}
-
-export interface CreateVehicleRequest {
-  plate: string;
-  brand: string;
-  model: string;
-  year: number;
-  color?: string | null;
-  initialKm: number;
-}
-
-export interface UpdateVehicleRequest {
-  plate?: string | null;
-  brand?: string | null;
-  model?: string | null;
-  year?: number | null;
-  color?: string | null;
-}
+import { Vehicle, CreateVehicleRequest, UpdateVehicleRequest } from '../models/vehicle.model';
 
 @Injectable({ providedIn: 'root' })
 export class VehicleService {

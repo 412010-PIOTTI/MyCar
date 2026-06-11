@@ -2,24 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-
-export interface UserProfile {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  createdAt: string;
-  twoFactorEnabled: boolean;
-}
-
-export interface UpdateProfileRequest {
-  name: string;
-}
-
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-}
+import { UserProfile, UpdateProfileRequest, ChangePasswordRequest } from '../models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {

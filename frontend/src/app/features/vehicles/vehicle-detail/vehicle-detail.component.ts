@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
-import { VehicleService, Vehicle } from '../../../core/services/vehicle.service';
+import { VehicleService } from '../../../core/services/vehicle.service';
+import { Vehicle } from '../../../core/models/vehicle.model';
 import { VehicleEditModalComponent } from '../vehicle-edit-modal/vehicle-edit-modal.component';
 import { ConfirmActionModalComponent } from '../../../shared/components/confirm-action-modal/confirm-action-modal.component';
 
