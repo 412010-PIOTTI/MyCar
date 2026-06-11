@@ -1,6 +1,6 @@
 package ar.edu.utn.frc.mycar.domain.entity;
 
-import ar.edu.utn.frc.mycar.domain.enums.ExpenseCategory;
+import ar.edu.utn.frc.mycar.domain.enums.MaintenanceType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,13 +10,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "expenses")
+@Table(name = "maintenance_logs")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Expense {
+public class MaintenanceLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,32 +32,19 @@ public class Expense {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private ExpenseCategory category;
-
-    /**
-     * Subcategoría libre (ej: COMBUSTIBLE, SERVICIO, MULTA).
-     * La categoría ADMINISTRATIVO es exclusiva del rol CONCESIONARIO
-     * y se valida a nivel de servicio.
-     */
-    @Column(length = 50)
-    private String subcategory;
+    private MaintenanceType type;
 
     @Column(nullable = false)
     private LocalDate date;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal amount;
+    @Column(nullable = false, name = "km_at_maintenance")
+    private Integer kmAtMaintenance;
 
     @Column(length = 300)
     private String description;
 
-    /** Kilometraje al momento del gasto (opcional) */
-    @Column(name = "km_at_expense")
-    private Integer kmAtExpense;
-
-    /** Fecha de vencimiento del gasto (opcional, ej: multa, seguro, impuesto). */
-    @Column(name = "expiry_date")
-    private LocalDate expiryDate;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal cost;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

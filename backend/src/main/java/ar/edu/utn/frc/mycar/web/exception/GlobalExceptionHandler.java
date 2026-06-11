@@ -47,6 +47,18 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
+    /** Returns 404 when an expense is not found or does not belong to the requesting user's vehicle. */
+    @ExceptionHandler(ExpenseNotFoundException.class)
+    public ProblemDetail handleExpenseNotFound(ExpenseNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    /** Returns 404 when a maintenance record is not found or does not belong to the requesting user's vehicle. */
+    @ExceptionHandler(MaintenanceLogNotFoundException.class)
+    public ProblemDetail handleMaintenanceLogNotFound(MaintenanceLogNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
     /** Returns 401 when the email/password combination is invalid. */
     @ExceptionHandler(InvalidCredentialsException.class)
     public ProblemDetail handleInvalidCredentials(InvalidCredentialsException ex) {
