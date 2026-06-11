@@ -3,6 +3,8 @@ package ar.edu.utn.frc.mycar.web.dto.request;
 import ar.edu.utn.frc.mycar.domain.enums.ExpenseCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
+
+import java.time.LocalDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -43,4 +45,7 @@ public class CreateExpenseRequest {
     @Schema(description = "Odometer reading at the time of the expense (optional)", example = "45230")
     @Min(value = 0, message = "El kilometraje no puede ser negativo")
     private Integer kmAtExpense;
+
+    @Schema(description = "Expiry date for expenses such as fines, taxes or insurance (optional)", example = "2025-06-30")
+    private LocalDate expiryDate;
 }

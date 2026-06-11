@@ -55,6 +55,10 @@ public class Expense {
     @Column(name = "km_at_expense")
     private Integer kmAtExpense;
 
+    /** Fecha de vencimiento del gasto (opcional, ej: multa, seguro, impuesto). */
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
