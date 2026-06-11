@@ -60,11 +60,6 @@ public class Vehicle {
     @Builder.Default
     private boolean active = true;
 
-    // ── Relaciones ──────────────────────────────────────────────────────────
-    @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<MaintenanceLog> maintenanceLogs = new ArrayList<>();
-
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Expense> expenses = new ArrayList<>();
@@ -77,11 +72,4 @@ public class Vehicle {
     @Builder.Default
     private List<Alert> alerts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<TransferToken> transferTokens = new ArrayList<>();
-
-    @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<TransferLog> transferLogs = new ArrayList<>();
 }

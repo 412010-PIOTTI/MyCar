@@ -3,34 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { EMPTY, Observable, finalize, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  token: string;
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-}
-
-export interface LoginResponse {
-  token?: string;
-  id?: number;
-  name?: string;
-  email?: string;
-  role?: string;
-  requires2FA?: boolean;
-}
+import { LoginRequest, RegisterRequest, AuthResponse, LoginResponse } from '../models/auth.model';
 
 @Injectable({
   providedIn: 'root',

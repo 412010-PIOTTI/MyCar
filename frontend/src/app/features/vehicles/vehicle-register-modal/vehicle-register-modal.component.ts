@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
-import { VehicleService, Vehicle } from '../../../core/services/vehicle.service';
+import { VehicleService } from '../../../core/services/vehicle.service';
+import { Vehicle } from '../../../core/models/vehicle.model';
 
 @Component({
   selector: 'app-vehicle-register-modal',
