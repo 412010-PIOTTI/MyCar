@@ -40,4 +40,19 @@ export class ExpenseService {
     const params = new HttpParams().set('year', year);
     return this.http.get<MonthlyTotalResponse[]>(`${this.base(vehicleId)}/monthly-totals`, { params });
   }
+
+  getAllExpenses(category?: ExpenseCategory | null): Observable<ExpenseResponse[]> {
+    const params = category ? new HttpParams().set('category', category) : undefined;
+    return this.http.get<ExpenseResponse[]>(`${environment.apiUrl}/expenses`, { params });
+  }
+
+  getAllSummary(year: number, month: number): Observable<ExpenseSummaryResponse> {
+    const params = new HttpParams().set('year', year).set('month', month);
+    return this.http.get<ExpenseSummaryResponse>(`${environment.apiUrl}/expenses/summary`, { params });
+  }
+
+  getAllMonthlyTotals(year: number): Observable<MonthlyTotalResponse[]> {
+    const params = new HttpParams().set('year', year);
+    return this.http.get<MonthlyTotalResponse[]>(`${environment.apiUrl}/expenses/monthly-totals`, { params });
+  }
 }

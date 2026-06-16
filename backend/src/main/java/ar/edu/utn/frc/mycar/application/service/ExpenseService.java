@@ -112,6 +112,50 @@ public class ExpenseService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<ExpenseResponse> getAllForOwner(String ownerEmail, ExpenseCategory category) {
+        List<Expense> expenses = (category == null)
+                ? expenseRepository.findByVehicleOwnerEmailOrderByDateDescIdDesc(ownerEmail)
+                : expenseRepository.findByVehicleOwnerEmailAndCategoryOrderByDateDescIdDesc(ownerEmail, category);
+        return expenses.stream().map(this::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ExpenseSummaryResponse getSummaryForOwner(String ownerEmail, int year, int month) {
+        BigDecimal current = expenseRepository.sumByOwnerAndYearMonth(ownerEmail, year, month);
+        current = current != null ? current : BigDecimal.ZERO;
+
+        int prevYear  = month == 1 ? year - 1 : year;
+        int prevMonth = month == 1 ? 12 : month - 1;
+        BigDecimal previous = expenseRepository.sumByOwnerAndYearMonth(ownerEmail, prevYear, prevMonth);
+        previous = previous != null ? previous : BigDecimal.ZERO;
+
+        Double percentageChange = null;
+        if (previous.compareTo(BigDecimal.ZERO) > 0) {
+            percentageChange = current.subtract(previous)
+                    .divide(previous, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100))
+                    .setScale(1, RoundingMode.HALF_UP)
+                    .doubleValue();
+        }
+
+        Map<ExpenseCategory, BigDecimal> byCategory = expenseRepository
+                .sumByCategoryForOwnerAndYearMonth(ownerEmail, year, month)
+                .stream()
+                .collect(Collectors.toMap(
+                        ExpenseRepository.CategoryTotal::getCategory,
+                        ExpenseRepository.CategoryTotal::getTotal));
+
+        return new ExpenseSummaryResponse(current, previous, percentageChange, byCategory);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MonthlyTotalResponse> getMonthlyTotalsForOwner(String ownerEmail, int year) {
+        return expenseRepository.sumByMonthForOwnerAndYear(ownerEmail, year).stream()
+                .map(r -> new MonthlyTotalResponse(r.getMonth(), r.getTotal()))
+                .toList();
+    }
+
     private ExpenseResponse toResponse(Expense expense) {
         return new ExpenseResponse(
                 expense.getId(),
