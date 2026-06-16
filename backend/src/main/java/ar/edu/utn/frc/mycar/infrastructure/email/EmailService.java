@@ -47,6 +47,70 @@ public class EmailService {
         }
     }
 
+    public void sendPasswordResetEmail(String toEmail, String resetLink) {
+        if (apiKey == null || apiKey.isBlank()) {
+            log.debug("SendGrid API key not configured — skipping password reset email to {}", toEmail);
+            return;
+        }
+
+        Email from = new Email(fromEmail, "MyCar");
+        Email to = new Email(toEmail);
+        String subject = "Recuperá tu contraseña MyCar";
+        Content content = new Content("text/html", buildResetEmailBody(resetLink));
+        Mail mail = new Mail(from, subject, to, content);
+
+        SendGrid sg = new SendGrid(apiKey);
+        Request request = new Request();
+        try {
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+            sg.api(request);
+        } catch (IOException e) {
+            log.error("Failed to send password reset email to {}: {}", toEmail, e.getMessage());
+            throw new RuntimeException("Error al enviar el email de recuperación de contraseña", e);
+        }
+    }
+
+    private String buildResetEmailBody(String resetLink) {
+        return """
+                <!DOCTYPE html>
+                <html lang="es">
+                <head><meta charset="UTF-8"></head>
+                <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+                  <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 8px;
+                              padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,.08);">
+                    <h1 style="color: #2563eb; font-size: 22px; margin-bottom: 8px;">MyCar</h1>
+                    <h2 style="color: #1e293b; font-size: 18px; margin-bottom: 16px;">
+                      Recuperá tu contraseña
+                    </h2>
+                    <p style="color: #475569; font-size: 14px; margin-bottom: 24px;">
+                      Recibimos una solicitud para restablecer la contraseña de tu cuenta.
+                      Hacé clic en el botón de abajo para continuar.
+                      El enlace es válido por <strong>1 hora</strong>.
+                    </p>
+                    <div style="text-align: center; margin: 32px 0;">
+                      <a href="%s"
+                         style="display: inline-block; background: #2563eb; color: #fff;
+                                font-size: 15px; font-weight: 600; text-decoration: none;
+                                padding: 14px 32px; border-radius: 8px;">
+                        Restablecer contraseña
+                      </a>
+                    </div>
+                    <p style="color: #475569; font-size: 13px; margin-bottom: 8px;">
+                      O copiá este enlace en tu navegador:
+                    </p>
+                    <p style="color: #2563eb; font-size: 12px; word-break: break-all;">%s</p>
+                    <p style="color: #94a3b8; font-size: 12px; margin-top: 24px;">
+                      Si no solicitaste este cambio, podés ignorar este email.
+                      Tu contraseña permanece sin cambios.
+                    </p>
+                  </div>
+                </body>
+                </html>
+                """.formatted(resetLink, resetLink);
+    }
+
     private String buildEmailBody(String code) {
         return """
                 <!DOCTYPE html>

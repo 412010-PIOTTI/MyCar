@@ -82,4 +82,16 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleTwoFactorVerification(TwoFactorVerificationException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
+
+    /** Returns 400 when a password reset token does not exist or has already been used. */
+    @ExceptionHandler(InvalidResetTokenException.class)
+    public ProblemDetail handleInvalidResetToken(InvalidResetTokenException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    /** Returns 400 when a password reset token has expired. */
+    @ExceptionHandler(ResetTokenExpiredException.class)
+    public ProblemDetail handleResetTokenExpired(ResetTokenExpiredException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 }

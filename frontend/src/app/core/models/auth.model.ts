@@ -25,3 +25,12 @@ export interface LoginResponse {
   role?: string;
   requires2FA?: boolean;
 }
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
