@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, forkJoin } from 'rxjs';
 import { VehicleService } from '../../../core/services/vehicle.service';
 import { ExpenseService } from '../../../core/services/expense.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Vehicle } from '../../../core/models/vehicle.model';
 import {
   ExpenseCategory,
@@ -31,9 +32,10 @@ interface CategoryMeta {
   templateUrl: './expenses-list.component.html',
 })
 export class ExpensesListComponent implements OnInit {
-  private destroyRef   = inject(DestroyRef);
+  private destroyRef     = inject(DestroyRef);
   private vehicleService = inject(VehicleService);
   private expenseService = inject(ExpenseService);
+  private authService    = inject(AuthService);
 
   // ── Vehicle selector ──────────────────────────────────────────────────────
   vehicles: Vehicle[]      = [];
@@ -88,7 +90,7 @@ export class ExpensesListComponent implements OnInit {
           this.vehicles = vehicles;
           if (vehicles.length === 1) this.selectVehicle(vehicles[0]);
         },
-        error: () => {},
+        error: () => { this.loadError = true; this.vehiclesLoading = false; },
       });
   }
 
@@ -113,7 +115,7 @@ export class ExpensesListComponent implements OnInit {
   trackById(_: number, expense: ExpenseResponse): number { return expense.id; }
 
   loadAll(): void {
-    if (!this.selectedVehicle) return;
+    if (!this.selectedVehicle || !this.authService.isAuthenticated()) return;
     const id    = this.selectedVehicle.id;
     const now   = new Date();
     const year  = now.getFullYear();

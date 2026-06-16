@@ -154,8 +154,11 @@ public class UserController {
             Authentication authentication,
             @RequestBody @Valid DeleteAccountRequest request,
             HttpServletRequest httpRequest) {
-        String token = httpRequest.getHeader("Authorization").substring(7);
-        userService.deleteAccount(authentication.getName(), request.password(), token);
+        String authHeader = httpRequest.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        userService.deleteAccount(authentication.getName(), request.password(), authHeader.substring(7));
         return ResponseEntity.ok(Map.of("message", "Cuenta desactivada correctamente"));
     }
 }

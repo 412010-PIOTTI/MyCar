@@ -24,7 +24,7 @@ public class EmailService {
 
     public void send2FACode(String toEmail, String code) {
         if (apiKey == null || apiKey.isBlank()) {
-            log.warn("SendGrid API key not configured — 2FA code for {} is {}", toEmail, code);
+            log.debug("SendGrid API key not configured — skipping email to {}", toEmail);
             return;
         }
 

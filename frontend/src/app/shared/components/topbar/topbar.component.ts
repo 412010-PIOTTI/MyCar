@@ -72,6 +72,7 @@ export class TopbarComponent implements OnInit {
           this.userName = user.name;
           this.initials = this.buildInitials(user.name);
         },
+        error: () => { /* 401 handled globally by authInterceptor */ },
       });
   }
 

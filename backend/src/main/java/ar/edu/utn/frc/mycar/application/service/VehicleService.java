@@ -104,7 +104,7 @@ public class VehicleService {
             vehicle.setColor(request.getColor().isBlank() ? null : request.getColor());
         }
 
-        return toResponse(vehicle);
+        return toResponse(vehicleRepository.save(vehicle));
     }
 
     /**
