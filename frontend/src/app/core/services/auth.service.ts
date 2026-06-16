@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { EMPTY, Observable, finalize, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginRequest, RegisterRequest, AuthResponse, LoginResponse } from '../models/auth.model';
+import { LoginRequest, RegisterRequest, AuthResponse, LoginResponse, ForgotPasswordRequest, ResetPasswordRequest } from '../models/auth.model';
 
 @Injectable({
   providedIn: 'root',
@@ -89,6 +89,16 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     return !!this.getToken();
+  }
+
+  requestPasswordReset(email: string): Observable<void> {
+    const body: ForgotPasswordRequest = { email };
+    return this.http.post<void>(`${this.apiUrl}/forgot-password`, body);
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    const body: ResetPasswordRequest = { token, newPassword };
+    return this.http.post<void>(`${this.apiUrl}/reset-password`, body);
   }
 
   private saveToken(token: string): void {

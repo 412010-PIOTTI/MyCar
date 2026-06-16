@@ -49,6 +49,8 @@ public class SecurityConfig {
                                 "/api/auth/verify-2fa",
                                 "/api/auth/verify-2fa/resend",
                                 "/api/auth/verify-2fa/cancel",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
                                 "/ping",
                                 "/error",
                                 "/swagger-ui/**",
