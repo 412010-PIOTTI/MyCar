@@ -63,12 +63,12 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
             @Param("year") int year);
 
     interface CategoryTotal {
-        ExpenseCategory category();
-        BigDecimal total();
+        ExpenseCategory getCategory();
+        BigDecimal getTotal();
     }
 
     interface MonthTotal {
-        int month();
-        BigDecimal total();
+        int getMonth();
+        BigDecimal getTotal();
     }
 }

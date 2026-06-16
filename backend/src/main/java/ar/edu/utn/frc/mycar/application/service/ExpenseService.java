@@ -98,8 +98,8 @@ public class ExpenseService {
                 .sumByCategoryForYearMonth(vehicleId, ownerEmail, year, month)
                 .stream()
                 .collect(Collectors.toMap(
-                        ExpenseRepository.CategoryTotal::category,
-                        ExpenseRepository.CategoryTotal::total));
+                        ExpenseRepository.CategoryTotal::getCategory,
+                        ExpenseRepository.CategoryTotal::getTotal));
 
         return new ExpenseSummaryResponse(current, previous, percentageChange, byCategory);
     }
@@ -108,7 +108,7 @@ public class ExpenseService {
     public List<MonthlyTotalResponse> getMonthlyTotals(String ownerEmail, Long vehicleId, int year) {
         vehicleService.getEntity(vehicleId, ownerEmail);
         return expenseRepository.sumByMonthForYear(vehicleId, ownerEmail, year).stream()
-                .map(r -> new MonthlyTotalResponse(r.month(), r.total()))
+                .map(r -> new MonthlyTotalResponse(r.getMonth(), r.getTotal()))
                 .toList();
     }
 
