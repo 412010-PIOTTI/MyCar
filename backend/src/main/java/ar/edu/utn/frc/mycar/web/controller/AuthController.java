@@ -148,8 +148,11 @@ public class AuthController {
     })
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(HttpServletRequest request) {
-        String token = request.getHeader("Authorization").substring(7);
-        authService.logout(token);
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        authService.logout(authHeader.substring(7));
         return ResponseEntity.ok(Map.of("message", "Sesión cerrada correctamente"));
     }
 }

@@ -114,7 +114,7 @@ export class SettingsComponent implements OnInit {
     this.profileStatus = 'loading';
     this.profileError = '';
 
-    this.userService.updateProfile(this.profileForm.value).subscribe({
+    this.userService.updateProfile(this.profileForm.value).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.profileStatus = 'success';
         setTimeout(() => (this.profileStatus = 'idle'), 3000);
@@ -164,7 +164,7 @@ export class SettingsComponent implements OnInit {
     this.passwordStatus = 'loading';
     this.passwordError = '';
 
-    this.userService.changePassword(this.passwordForm.value).subscribe({
+    this.userService.changePassword(this.passwordForm.value).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.passwordStatus = 'success';
         this.passwordForm.reset();

@@ -71,10 +71,17 @@ export class AuthService {
       .pipe(finalize(() => this.router.navigate(['/auth/login'])));
   }
 
+  /** Clears the local session and navigates to login. Safe to call multiple times — only acts once. */
   clearLocalSession(): void {
+    if (this.sessionClearing) return;
+    this.sessionClearing = true;
     localStorage.removeItem(this.TOKEN_KEY);
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/auth/login']).then(() => {
+      this.sessionClearing = false;
+    });
   }
+
+  private sessionClearing = false;
 
   getToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY);

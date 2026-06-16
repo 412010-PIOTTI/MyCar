@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
 
 @ExtendWith(MockitoExtension.class)
 class VehicleServiceTest {
@@ -136,6 +137,7 @@ class VehicleServiceTest {
                 .thenReturn(Optional.of(existingVehicle));
         when(vehicleRepository.existsByPlateAndActiveTrueAndIdNot("XX999YY", VEHICLE_ID))
                 .thenReturn(false);
+        when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(returnsFirstArg());
 
         VehicleResponse response = vehicleService.update(OWNER_EMAIL, VEHICLE_ID, request);
 
@@ -153,6 +155,7 @@ class VehicleServiceTest {
 
         when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
                 .thenReturn(Optional.of(existingVehicle));
+        when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(returnsFirstArg());
 
         VehicleResponse response = vehicleService.update(OWNER_EMAIL, VEHICLE_ID, request);
 
@@ -174,6 +177,7 @@ class VehicleServiceTest {
                 .thenReturn(Optional.of(existingVehicle));
         when(vehicleRepository.existsByPlateAndActiveTrueAndIdNot("XX999YY", VEHICLE_ID))
                 .thenReturn(false);
+        when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(returnsFirstArg());
 
         VehicleResponse response = vehicleService.update(OWNER_EMAIL, VEHICLE_ID, request);
 
@@ -191,6 +195,7 @@ class VehicleServiceTest {
         // IdNot excludes this vehicle's own plate → no conflict
         when(vehicleRepository.existsByPlateAndActiveTrueAndIdNot("AB123CD", VEHICLE_ID))
                 .thenReturn(false);
+        when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(returnsFirstArg());
 
         VehicleResponse response = vehicleService.update(OWNER_EMAIL, VEHICLE_ID, request);
 
@@ -219,6 +224,7 @@ class VehicleServiceTest {
 
         when(vehicleRepository.findByIdAndOwnerEmailAndActiveTrue(VEHICLE_ID, OWNER_EMAIL))
                 .thenReturn(Optional.of(existingVehicle));
+        when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(returnsFirstArg());
 
         VehicleResponse response = vehicleService.update(OWNER_EMAIL, VEHICLE_ID, request);
 
