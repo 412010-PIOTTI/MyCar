@@ -50,6 +50,7 @@ public class SecurityConfig {
                                 "/api/auth/verify-2fa/resend",
                                 "/api/auth/verify-2fa/cancel",
                                 "/ping",
+                                "/error",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
