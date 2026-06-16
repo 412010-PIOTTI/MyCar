@@ -62,6 +62,50 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
             @Param("ownerEmail") String ownerEmail,
             @Param("year") int year);
 
+    // ── All-vehicles queries (no vehicleId filter) ────────────────────────────
+
+    List<Expense> findByVehicleOwnerEmailOrderByDateDescIdDesc(String ownerEmail);
+
+    List<Expense> findByVehicleOwnerEmailAndCategoryOrderByDateDescIdDesc(
+            String ownerEmail, ExpenseCategory category);
+
+    @Query("""
+            SELECT COALESCE(SUM(e.amount), 0)
+            FROM Expense e
+            WHERE e.vehicle.owner.email = :ownerEmail
+              AND YEAR(e.date) = :year
+              AND MONTH(e.date) = :month
+            """)
+    BigDecimal sumByOwnerAndYearMonth(
+            @Param("ownerEmail") String ownerEmail,
+            @Param("year") int year,
+            @Param("month") int month);
+
+    @Query("""
+            SELECT e.category AS category, COALESCE(SUM(e.amount), 0) AS total
+            FROM Expense e
+            WHERE e.vehicle.owner.email = :ownerEmail
+              AND YEAR(e.date) = :year
+              AND MONTH(e.date) = :month
+            GROUP BY e.category
+            """)
+    List<CategoryTotal> sumByCategoryForOwnerAndYearMonth(
+            @Param("ownerEmail") String ownerEmail,
+            @Param("year") int year,
+            @Param("month") int month);
+
+    @Query("""
+            SELECT MONTH(e.date) AS month, COALESCE(SUM(e.amount), 0) AS total
+            FROM Expense e
+            WHERE e.vehicle.owner.email = :ownerEmail
+              AND YEAR(e.date) = :year
+            GROUP BY MONTH(e.date)
+            ORDER BY MONTH(e.date)
+            """)
+    List<MonthTotal> sumByMonthForOwnerAndYear(
+            @Param("ownerEmail") String ownerEmail,
+            @Param("year") int year);
+
     interface CategoryTotal {
         ExpenseCategory getCategory();
         BigDecimal getTotal();

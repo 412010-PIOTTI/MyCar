@@ -81,6 +81,16 @@ export class ExpensesListComponent implements OnInit {
     ADMINISTRATIVO:  { icon: '📋', bgColor: 'bg-slate-100',    label: 'Administrativo' },
   };
 
+  /** True when showing aggregate data for all vehicles (no specific one selected). */
+  get allVehiclesMode(): boolean {
+    return this.selectedVehicle === null && this.vehicles.length > 0;
+  }
+
+  /** True when the data panel should be rendered (vehicle selected OR all-vehicles mode). */
+  get hasPanelData(): boolean {
+    return this.selectedVehicle !== null || this.allVehiclesMode;
+  }
+
   ngOnInit(): void {
     this.vehicleService
       .getVehicles()
@@ -88,7 +98,12 @@ export class ExpensesListComponent implements OnInit {
       .subscribe({
         next: (vehicles) => {
           this.vehicles = vehicles;
-          if (vehicles.length === 1) this.selectVehicle(vehicles[0]);
+          if (vehicles.length === 1) {
+            // Single vehicle → auto-select it
+            this.selectedVehicle = vehicles[0];
+          }
+          // When multiple vehicles or a vehicle was auto-selected, load data
+          if (vehicles.length > 0) this.loadAll();
         },
         error: () => { this.loadError = true; this.vehiclesLoading = false; },
       });
@@ -101,9 +116,17 @@ export class ExpensesListComponent implements OnInit {
   }
 
   onVehicleChange(event: Event): void {
-    const id = Number((event.target as HTMLSelectElement).value);
-    const vehicle = this.vehicles.find((v) => v.id === id);
-    if (vehicle) this.selectVehicle(vehicle);
+    const value = (event.target as HTMLSelectElement).value;
+    if (value === '') {
+      // "Todos los vehículos" selected
+      this.selectedVehicle = null;
+      this.activeCategory  = null;
+      this.loadAll();
+    } else {
+      const id      = Number(value);
+      const vehicle = this.vehicles.find((v) => v.id === id);
+      if (vehicle) this.selectVehicle(vehicle);
+    }
   }
 
   selectTab(category: ExpenseCategory | null): void {
@@ -115,8 +138,7 @@ export class ExpensesListComponent implements OnInit {
   trackById(_: number, expense: ExpenseResponse): number { return expense.id; }
 
   loadAll(): void {
-    if (!this.selectedVehicle || !this.authService.isAuthenticated()) return;
-    const id    = this.selectedVehicle.id;
+    if (!this.authService.isAuthenticated()) return;
     const now   = new Date();
     const year  = now.getFullYear();
     const month = now.getMonth() + 1;
@@ -124,36 +146,57 @@ export class ExpensesListComponent implements OnInit {
     this.loading   = true;
     this.loadError = false;
 
-    forkJoin({
-      expenses:    this.expenseService.getExpenses(id, this.activeCategory),
-      summary:     this.expenseService.getSummary(id, year, month),
-      currentYear: this.expenseService.getMonthlyTotals(id, year),
-      prevYear:    this.expenseService.getMonthlyTotals(id, year - 1),
-    })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.loading = false)))
-      .subscribe({
-        next: ({ expenses, summary, currentYear, prevYear }) => {
-          this.expenses         = expenses;
-          this.summary          = summary;
-          this.currentYearTotals = currentYear;
-          this.prevYearTotals    = prevYear;
-        },
-        error: () => (this.loadError = true),
-      });
+    if (this.selectedVehicle) {
+      const id = this.selectedVehicle.id;
+      forkJoin({
+        expenses:    this.expenseService.getExpenses(id, this.activeCategory),
+        summary:     this.expenseService.getSummary(id, year, month),
+        currentYear: this.expenseService.getMonthlyTotals(id, year),
+        prevYear:    this.expenseService.getMonthlyTotals(id, year - 1),
+      })
+        .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.loading = false)))
+        .subscribe({
+          next: ({ expenses, summary, currentYear, prevYear }) => {
+            this.expenses          = expenses;
+            this.summary           = summary;
+            this.currentYearTotals = currentYear;
+            this.prevYearTotals    = prevYear;
+          },
+          error: () => (this.loadError = true),
+        });
+    } else {
+      forkJoin({
+        expenses:    this.expenseService.getAllExpenses(this.activeCategory),
+        summary:     this.expenseService.getAllSummary(year, month),
+        currentYear: this.expenseService.getAllMonthlyTotals(year),
+        prevYear:    this.expenseService.getAllMonthlyTotals(year - 1),
+      })
+        .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.loading = false)))
+        .subscribe({
+          next: ({ expenses, summary, currentYear, prevYear }) => {
+            this.expenses          = expenses;
+            this.summary           = summary;
+            this.currentYearTotals = currentYear;
+            this.prevYearTotals    = prevYear;
+          },
+          error: () => (this.loadError = true),
+        });
+    }
   }
 
   private reloadExpenses(): void {
-    if (!this.selectedVehicle) return;
     this.listLoading = true;
-    this.expenseService
-      .getExpenses(this.selectedVehicle.id, this.activeCategory)
+    const obs = this.selectedVehicle
+      ? this.expenseService.getExpenses(this.selectedVehicle.id, this.activeCategory)
+      : this.expenseService.getAllExpenses(this.activeCategory);
+
+    obs
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.listLoading = false)))
       .subscribe({ next: (expenses) => (this.expenses = expenses) });
   }
 
   onExpenseCreated(expense: ExpenseResponse): void {
     this.showRegisterModal = false;
-    // Refresh all data so summary and chart stay in sync
     this.loadAll();
   }
 
@@ -191,6 +234,11 @@ export class ExpensesListComponent implements OnInit {
 
   getExpenseTitle(expense: ExpenseResponse): string {
     return expense.subcategory || this.getCategoryLabel(expense.category);
+  }
+
+  getVehicleLabel(vehicleId: number): string {
+    const v = this.vehicles.find((v) => v.id === vehicleId);
+    return v ? `${v.brand} ${v.model} · ${v.plate}` : '';
   }
 
   // ── Summary helpers ───────────────────────────────────────────────────────
