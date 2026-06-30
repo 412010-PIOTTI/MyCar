@@ -1,13 +1,17 @@
 package ar.edu.utn.frc.mycar.application.service;
 
+import ar.edu.utn.frc.mycar.domain.entity.Expense;
 import ar.edu.utn.frc.mycar.domain.entity.MaintenanceLog;
 import ar.edu.utn.frc.mycar.domain.entity.User;
 import ar.edu.utn.frc.mycar.domain.entity.Vehicle;
-import ar.edu.utn.frc.mycar.domain.enums.MaintenanceType;
+import ar.edu.utn.frc.mycar.domain.enums.ExpenseCategory;
+import ar.edu.utn.frc.mycar.domain.enums.MaintenanceSystem;
 import ar.edu.utn.frc.mycar.domain.enums.Role;
+import ar.edu.utn.frc.mycar.domain.repository.ExpenseRepository;
 import ar.edu.utn.frc.mycar.domain.repository.MaintenanceLogRepository;
 import ar.edu.utn.frc.mycar.web.dto.request.CreateMaintenanceLogRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.MaintenanceLogResponse;
+import ar.edu.utn.frc.mycar.web.exception.ExpenseNotFoundException;
 import ar.edu.utn.frc.mycar.web.exception.MaintenanceLogNotFoundException;
 import ar.edu.utn.frc.mycar.web.exception.VehicleNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,6 +36,7 @@ import static org.mockito.Mockito.*;
 class MaintenanceLogServiceTest {
 
     @Mock MaintenanceLogRepository maintenanceLogRepository;
+    @Mock ExpenseRepository expenseRepository;
     @Mock VehicleService vehicleService;
     @Mock UserService userService;
 
@@ -56,18 +62,30 @@ class MaintenanceLogServiceTest {
 
     private CreateMaintenanceLogRequest buildRequest(int km) {
         CreateMaintenanceLogRequest req = new CreateMaintenanceLogRequest();
-        req.setType(MaintenanceType.ACEITE);
+        req.setSystem(MaintenanceSystem.FRENOS);
         req.setDate(LocalDate.now());
         req.setKmAtMaintenance(km);
+        req.setWorkshop("Taller Central");
         return req;
     }
 
     private MaintenanceLog buildLog(int km) {
         return MaintenanceLog.builder()
                 .id(20L).vehicle(vehicle).user(owner)
-                .type(MaintenanceType.ACEITE)
+                .system(MaintenanceSystem.FRENOS)
                 .date(LocalDate.now())
                 .kmAtMaintenance(km)
+                .workshop("Taller Central")
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
+    private Expense buildExpense() {
+        return Expense.builder()
+                .id(5L).vehicle(vehicle).user(owner)
+                .category(ExpenseCategory.MANTENIMIENTO)
+                .date(LocalDate.now())
+                .amount(BigDecimal.valueOf(25000))
                 .createdAt(LocalDateTime.now())
                 .build();
     }
@@ -118,6 +136,55 @@ class MaintenanceLogServiceTest {
                 .isInstanceOf(VehicleNotFoundException.class);
 
         verify(maintenanceLogRepository, never()).save(any());
+    }
+
+    // ── expense link ──────────────────────────────────────────────────────────
+
+    @Test
+    void create_withValidExpenseId_linksExpense() {
+        Expense expense = buildExpense();
+        CreateMaintenanceLogRequest req = buildRequest(CURRENT_KM);
+        req.setExpenseId(expense.getId());
+
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
+        when(expenseRepository.findByIdAndVehicleIdAndVehicleOwnerEmail(expense.getId(), VEHICLE_ID, OWNER_EMAIL))
+                .thenReturn(Optional.of(expense));
+        when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
+
+        MaintenanceLog savedLog = buildLog(CURRENT_KM);
+        savedLog.setExpense(expense);
+        when(maintenanceLogRepository.save(any(MaintenanceLog.class))).thenReturn(savedLog);
+
+        MaintenanceLogResponse response = maintenanceLogService.create(OWNER_EMAIL, VEHICLE_ID, req);
+
+        assertThat(response.expenseId()).isEqualTo(expense.getId());
+    }
+
+    @Test
+    void create_withInvalidExpenseId_throwsExpenseNotFoundException() {
+        CreateMaintenanceLogRequest req = buildRequest(CURRENT_KM);
+        req.setExpenseId(99L);
+
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
+        when(expenseRepository.findByIdAndVehicleIdAndVehicleOwnerEmail(99L, VEHICLE_ID, OWNER_EMAIL))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> maintenanceLogService.create(OWNER_EMAIL, VEHICLE_ID, req))
+                .isInstanceOf(ExpenseNotFoundException.class);
+
+        verify(maintenanceLogRepository, never()).save(any());
+    }
+
+    @Test
+    void create_withoutExpenseId_savesWithoutExpenseLink() {
+        when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
+        when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
+        when(maintenanceLogRepository.save(any(MaintenanceLog.class))).thenReturn(buildLog(CURRENT_KM));
+
+        MaintenanceLogResponse response = maintenanceLogService.create(OWNER_EMAIL, VEHICLE_ID, buildRequest(CURRENT_KM));
+
+        assertThat(response.expenseId()).isNull();
+        verify(expenseRepository, never()).findByIdAndVehicleIdAndVehicleOwnerEmail(any(), any(), any());
     }
 
     // ── getAll ────────────────────────────────────────────────────────────────
