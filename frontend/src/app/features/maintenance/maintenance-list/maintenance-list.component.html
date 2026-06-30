@@ -1,0 +1,265 @@
+<div class="p-6">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <div class="flex flex-col gap-4 mb-6 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-text-primary">Historial de Mantenimiento</h1>
+      <p *ngIf="selectedVehicle" class="text-sm text-text-secondary mt-1">
+        Registro detallado para tu {{ selectedVehicle.brand }} {{ selectedVehicle.model }} ({{ selectedVehicle.plate }})
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+
+      <!-- Vehicle selector -->
+      <div *ngIf="!vehiclesLoading">
+        <select
+          *ngIf="vehicles.length > 1"
+          (change)="onVehicleChange($event)"
+          class="form-input text-sm pr-8"
+        >
+          <option *ngFor="let v of vehicles" [value]="v.id" [selected]="selectedVehicle?.id === v.id">
+            {{ v.brand }} {{ v.model }} · {{ v.plate }}
+          </option>
+        </select>
+        <span *ngIf="vehicles.length === 1 && selectedVehicle" class="text-sm text-text-secondary font-medium">
+          {{ selectedVehicle.brand }} {{ selectedVehicle.model }} · {{ selectedVehicle.plate }}
+        </span>
+        <span *ngIf="vehicles.length === 0" class="text-sm text-text-muted">Sin vehículos registrados</span>
+      </div>
+
+      <button
+        class="btn-primary whitespace-nowrap"
+        [disabled]="!selectedVehicle"
+        (click)="showRegisterModal = true"
+      >
+        + Registrar service
+      </button>
+    </div>
+  </div>
+
+  <!-- ── No vehicles ────────────────────────────────────────────────────── -->
+  <div *ngIf="!vehiclesLoading && vehicles.length === 0" class="card flex flex-col items-center py-16 gap-3 text-center">
+    <span class="text-4xl">🔧</span>
+    <p class="text-text-primary font-medium">No tenés vehículos registrados</p>
+    <p class="text-sm text-text-secondary">Agregá un vehículo para empezar a registrar servicios</p>
+  </div>
+
+  <!-- ── Loading skeleton ───────────────────────────────────────────────── -->
+  <div *ngIf="loading" class="space-y-4 animate-pulse">
+    <div class="grid grid-cols-12 gap-4">
+      <div class="col-span-8 h-[280px] bg-surface rounded-md"></div>
+      <div class="col-span-4 space-y-4">
+        <div class="h-[148px] bg-surface rounded-md"></div>
+        <div class="h-[120px] bg-surface rounded-md"></div>
+      </div>
+    </div>
+    <div *ngFor="let i of [1,2,3,4]" class="h-16 bg-surface rounded-md"></div>
+  </div>
+
+  <!-- ── Error ──────────────────────────────────────────────────────────── -->
+  <div *ngIf="loadError && !loading" class="card text-center py-10">
+    <p class="text-danger font-medium mb-2">No se pudo cargar el historial</p>
+    <button class="btn-secondary text-sm" (click)="loadAll()">Reintentar</button>
+  </div>
+
+  <!-- ── Main content ───────────────────────────────────────────────────── -->
+  <ng-container *ngIf="selectedVehicle && !loading && !loadError">
+
+    <!-- ── Top row: salud + tarjetas laterales ────────────────────────── -->
+    <div class="grid grid-cols-12 gap-4 mb-4">
+
+      <!-- Salud del Sistema -->
+      <div class="col-span-12 lg:col-span-8 card">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-semibold text-text-primary">🛡&nbsp; Salud del Sistema</h3>
+          <span
+            *ngIf="healthData"
+            class="px-3 py-1 rounded-full text-xs font-semibold"
+            [ngClass]="overallStatusClass"
+          >
+            {{ overallStatusLabel }}
+          </span>
+        </div>
+
+        <!-- Health bars -->
+        <ng-container *ngIf="healthData && healthData.systems.length > 0; else noHealth">
+          <div *ngFor="let sys of healthData.systems" class="mb-4 last:mb-0">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-sm text-text-primary">{{ sys.name }}</span>
+              <span class="text-xs font-semibold" [ngClass]="getHealthPctClass(sys.healthPct)">
+                {{ sys.healthPct != null ? (sys.healthPct + '%') : '—' }}
+              </span>
+            </div>
+            <div class="w-full bg-surface h-2 rounded-full overflow-hidden">
+              <div
+                class="h-2 rounded-full transition-all duration-500"
+                [ngClass]="getHealthBarColor(sys.healthPct)"
+                [style.width.%]="sys.healthPct ?? 0"
+              ></div>
+            </div>
+            <p *ngIf="sys.recommendation" class="text-[11px] text-warning-dark mt-0.5">
+              {{ sys.recommendation }}
+            </p>
+          </div>
+        </ng-container>
+
+        <!-- Next service card -->
+        <div *ngIf="healthData" class="mt-4 border border-surface-border rounded-lg p-4 bg-surface flex items-center gap-6">
+          <div>
+            <p class="text-[10px] font-semibold text-text-secondary uppercase tracking-wide mb-1">Próximo service estimado</p>
+            <p class="text-3xl font-bold text-text-primary leading-none">
+              {{ healthData.systems.length > 0 ? '4.250' : '—' }}
+            </p>
+            <p class="text-xs text-text-muted mt-0.5">KM restantes</p>
+          </div>
+        </div>
+
+        <ng-template #noHealth>
+          <div class="flex flex-col items-center py-8 text-center gap-2">
+            <span class="text-3xl">📊</span>
+            <p class="text-sm text-text-secondary">Registrá servicios para ver el estado de salud</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Right column: gasto anual + alertas -->
+      <div class="col-span-12 lg:col-span-4 flex flex-col gap-4">
+
+        <!-- Gasto Total Anual -->
+        <div class="rounded-md bg-primary text-text-inverse p-5 flex flex-col gap-1 shadow-panel">
+          <p class="text-sm text-white/80">Gasto Total Anual</p>
+          <p class="text-3xl font-bold">
+            {{ annualCost ? formatCost(annualCost.total) : '$—' }}
+          </p>
+          <span
+            *ngIf="annualCost?.changePercent != null"
+            class="text-xs font-medium text-emerald-300 mt-1"
+          >
+            {{ formatChangePercent(annualCost!.changePercent) }}
+          </span>
+          <p *ngIf="!annualCost" class="text-sm text-white/60 mt-1">Sin datos aún</p>
+        </div>
+
+        <!-- Alertas Pendientes -->
+        <div class="card flex-1">
+          <h4 class="text-sm font-semibold text-text-primary mb-3">⚠&nbsp; Alertas Pendientes</h4>
+          <ng-container *ngIf="urgentAlerts.length > 0; else noAlerts">
+            <div *ngFor="let alert of urgentAlerts" class="mb-3 last:mb-0">
+              <p [ngClass]="getUrgencyTextClass(alert.urgencyLevel)" class="text-sm">{{ alert.title }}</p>
+              <p class="text-xs text-text-muted">{{ alertSubtitle(alert) }}</p>
+            </div>
+          </ng-container>
+          <ng-template #noAlerts>
+            <p class="text-sm text-text-secondary">Sin alertas pendientes ✅</p>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Historial Detallado ─────────────────────────────────────────── -->
+    <div class="card overflow-hidden">
+      <!-- Table header row -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-surface-border">
+        <h3 class="text-base font-semibold text-text-primary">Historial Detallado</h3>
+        <div class="flex items-center gap-2">
+          <!-- System filter tabs -->
+          <div class="flex items-center gap-1 overflow-x-auto">
+            <button
+              *ngFor="let tab of tabs"
+              type="button"
+              (click)="selectTab(tab.value)"
+              class="px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors"
+              [ngClass]="activeSystem === tab.value
+                ? 'bg-primary text-text-inverse'
+                : 'text-text-secondary hover:bg-surface'"
+            >
+              {{ tab.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column headers -->
+      <div class="hidden md:grid grid-cols-[120px_100px_130px_1fr_100px_1fr_44px] gap-3 px-5 py-2 bg-surface border-b border-surface-border">
+        <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wide">Fecha</span>
+        <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wide">KM</span>
+        <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wide">Sistema</span>
+        <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wide">Taller</span>
+        <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wide">Costo</span>
+        <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wide">Descripción</span>
+        <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wide text-right">Acción</span>
+      </div>
+
+      <!-- Empty state -->
+      <div *ngIf="records.length === 0" class="flex flex-col items-center py-14 gap-3 text-center px-5">
+        <span class="text-4xl">🔧</span>
+        <p class="text-text-primary font-medium">No hay registros de mantenimiento</p>
+        <p class="text-sm text-text-secondary">
+          {{ activeSystem ? 'No hay registros para este sistema.' : 'Registrá el primer service usando el botón de arriba.' }}
+        </p>
+      </div>
+
+      <!-- Rows -->
+      <div class="divide-y divide-surface-border">
+        <div
+          *ngFor="let log of records; trackBy: trackById"
+          class="grid grid-cols-1 md:grid-cols-[120px_100px_130px_1fr_100px_1fr_44px] gap-3 px-5 py-4 items-center hover:bg-surface/50 transition-colors"
+        >
+          <!-- Fecha -->
+          <span class="text-sm text-text-secondary">{{ formatDate(log.date) }}</span>
+
+          <!-- KM -->
+          <span class="text-sm text-text-secondary">{{ formatKm(log.kmAtMaintenance) }}</span>
+
+          <!-- Sistema badge -->
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit"
+            [ngClass]="[getBgClass(log.system), getTextClass(log.system)]"
+          >
+            {{ getLabel(log.system) }}
+          </span>
+
+          <!-- Taller -->
+          <span class="text-sm text-text-primary truncate">{{ log.workshop || '—' }}</span>
+
+          <!-- Costo -->
+          <span class="text-sm font-semibold text-text-primary">{{ formatCost(log.cost) }}</span>
+
+          <!-- Descripción -->
+          <span class="text-xs text-text-secondary truncate max-w-xs">{{ log.description || '—' }}</span>
+
+          <!-- Acción -->
+          <div class="flex justify-end">
+            <button
+              type="button"
+              title="Ver detalle"
+              class="text-primary hover:text-primary/70 transition-colors p-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer count -->
+      <div *ngIf="records.length > 0" class="px-5 py-3 border-t border-surface-border bg-surface">
+        <p class="text-xs text-text-muted">
+          Mostrando {{ records.length }} de {{ allRecords.length }} mantenimiento{{ allRecords.length !== 1 ? 's' : '' }} registrados
+        </p>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>
+
+<!-- ── Modal ──────────────────────────────────────────────────────────────── -->
+<app-maintenance-register-modal
+  *ngIf="showRegisterModal && selectedVehicle"
+  [vehicleId]="selectedVehicle.id"
+  (close)="showRegisterModal = false"
+  (logCreated)="onLogCreated()"
+/>
