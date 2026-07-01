@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
@@ -16,6 +16,7 @@ import { AuthLayoutComponent } from '../../../shared/components/auth-layout/auth
 export class VerifyTwoFactorComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
 
@@ -62,7 +63,10 @@ export class VerifyTwoFactorComponent implements OnInit, OnDestroy {
         finalize(() => (this.loading = false)),
       )
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
+        next: () => {
+          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+          this.router.navigateByUrl(returnUrl || '/dashboard');
+        },
         error: (err) => {
           this.errorMessage =
             err.error?.detail ?? 'Código incorrecto. Verificá e intentá de nuevo.';

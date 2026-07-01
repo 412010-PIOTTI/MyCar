@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
@@ -16,6 +16,7 @@ import { PasswordInputComponent } from '../../../shared/components/password-inpu
 export class LoginComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
 
@@ -51,10 +52,11 @@ export class LoginComponent {
       )
       .subscribe({
         next: (response) => {
+          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
           if (response.requires2FA) {
-            this.router.navigate(['/auth/verify-2fa']);
+            this.router.navigate(['/auth/verify-2fa'], returnUrl ? { queryParams: { returnUrl } } : undefined);
           } else {
-            this.router.navigate(['/dashboard']);
+            this.router.navigateByUrl(returnUrl || '/dashboard');
           }
         },
         error: (err) => {
