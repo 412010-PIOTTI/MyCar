@@ -124,17 +124,34 @@
         </div>
       </div>
 
-      <!-- Gasto vinculado -->
-      <div>
-        <label class="block text-sm font-medium text-text-primary mb-1">ID de gasto vinculado</label>
-        <input
-          type="number"
-          formControlName="expenseId"
-          class="form-input w-full"
-          placeholder="Opcional — ID de la factura registrada como gasto"
-          min="1"
-        />
-        <p class="mt-1 text-xs text-text-muted">Si ya registraste la factura como gasto, podés vincularla aquí.</p>
+      <!-- Registrar como gasto -->
+      <div class="border border-surface-border rounded-md p-4 bg-surface space-y-3">
+        <label class="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            formControlName="createExpense"
+            class="h-4 w-4 rounded border-surface-border text-primary accent-primary"
+          />
+          <span class="text-sm font-medium text-text-primary">Registrar también como gasto</span>
+        </label>
+
+        <p *ngIf="wantsExpense && !form.get('cost')?.value" class="text-xs text-warning">
+          Completá el costo para que el gasto pueda crearse.
+        </p>
+
+        <div *ngIf="wantsExpense" class="space-y-2 pt-1">
+          <label class="block text-sm font-medium text-text-primary mb-1">
+            Subcategoría <span class="text-text-muted font-normal">(opcional)</span>
+          </label>
+          <input
+            type="text"
+            formControlName="expenseSubcategory"
+            class="form-input w-full"
+            placeholder="Ej: Service oficial, Cambio de aceite…"
+            maxlength="50"
+          />
+          <p *ngIf="fieldError('expenseSubcategory')" class="mt-1 text-xs text-danger">{{ fieldError('expenseSubcategory') }}</p>
+        </div>
       </div>
 
       <!-- General error -->

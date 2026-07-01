@@ -54,6 +54,10 @@ public class CreateMaintenanceLogRequest {
     @Schema(description = "Date on which the next service is expected", example = "2025-03-15")
     private LocalDate nextServiceDate;
 
-    @Schema(description = "Optional id of an Expense record linked to this service (e.g. workshop invoice)")
-    private Long expenseId;
+    @Schema(description = "If true, an Expense record (category MANTENIMIENTO) is created atomically with this log")
+    private boolean createExpense;
+
+    @Schema(description = "Optional subcategory for the auto-created expense", example = "Service oficial")
+    @Size(max = 50, message = "La subcategoría no puede superar los 50 caracteres")
+    private String expenseSubcategory;
 }

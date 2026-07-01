@@ -49,5 +49,6 @@ export interface CreateMaintenanceLogRequest {
   cost?: number | null;
   nextServiceKm?: number | null;
   nextServiceDate?: string | null;
-  expenseId?: number | null;
+  createExpense?: boolean;
+  expenseSubcategory?: string | null;
 }

@@ -11,7 +11,6 @@ import ar.edu.utn.frc.mycar.domain.repository.ExpenseRepository;
 import ar.edu.utn.frc.mycar.domain.repository.MaintenanceLogRepository;
 import ar.edu.utn.frc.mycar.web.dto.request.CreateMaintenanceLogRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.MaintenanceLogResponse;
-import ar.edu.utn.frc.mycar.web.exception.ExpenseNotFoundException;
 import ar.edu.utn.frc.mycar.web.exception.MaintenanceLogNotFoundException;
 import ar.edu.utn.frc.mycar.web.exception.VehicleNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -138,45 +137,47 @@ class MaintenanceLogServiceTest {
         verify(maintenanceLogRepository, never()).save(any());
     }
 
-    // ── expense link ──────────────────────────────────────────────────────────
+    // ── expense auto-creation ─────────────────────────────────────────────────
 
     @Test
-    void create_withValidExpenseId_linksExpense() {
-        Expense expense = buildExpense();
+    void create_withCreateExpenseAndCost_createsAndLinksExpense() {
+        Expense savedExpense = buildExpense();
         CreateMaintenanceLogRequest req = buildRequest(CURRENT_KM);
-        req.setExpenseId(expense.getId());
+        req.setCost(BigDecimal.valueOf(25000));
+        req.setCreateExpense(true);
+        req.setExpenseSubcategory("Service oficial");
 
         when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
-        when(expenseRepository.findByIdAndVehicleIdAndVehicleOwnerEmail(expense.getId(), VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.of(expense));
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
+        when(expenseRepository.save(any(Expense.class))).thenReturn(savedExpense);
 
         MaintenanceLog savedLog = buildLog(CURRENT_KM);
-        savedLog.setExpense(expense);
+        savedLog.setExpense(savedExpense);
         when(maintenanceLogRepository.save(any(MaintenanceLog.class))).thenReturn(savedLog);
 
         MaintenanceLogResponse response = maintenanceLogService.create(OWNER_EMAIL, VEHICLE_ID, req);
 
-        assertThat(response.expenseId()).isEqualTo(expense.getId());
+        assertThat(response.expenseId()).isEqualTo(savedExpense.getId());
+        verify(expenseRepository).save(any(Expense.class));
     }
 
     @Test
-    void create_withInvalidExpenseId_throwsExpenseNotFoundException() {
+    void create_withCreateExpenseButNoCost_skipsExpenseCreation() {
         CreateMaintenanceLogRequest req = buildRequest(CURRENT_KM);
-        req.setExpenseId(99L);
+        req.setCreateExpense(true);
 
         when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
-        when(expenseRepository.findByIdAndVehicleIdAndVehicleOwnerEmail(99L, VEHICLE_ID, OWNER_EMAIL))
-                .thenReturn(Optional.empty());
+        when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
+        when(maintenanceLogRepository.save(any(MaintenanceLog.class))).thenReturn(buildLog(CURRENT_KM));
 
-        assertThatThrownBy(() -> maintenanceLogService.create(OWNER_EMAIL, VEHICLE_ID, req))
-                .isInstanceOf(ExpenseNotFoundException.class);
+        MaintenanceLogResponse response = maintenanceLogService.create(OWNER_EMAIL, VEHICLE_ID, req);
 
-        verify(maintenanceLogRepository, never()).save(any());
+        assertThat(response.expenseId()).isNull();
+        verify(expenseRepository, never()).save(any());
     }
 
     @Test
-    void create_withoutExpenseId_savesWithoutExpenseLink() {
+    void create_withoutCreateExpense_savesWithoutExpenseLink() {
         when(vehicleService.getEntity(VEHICLE_ID, OWNER_EMAIL)).thenReturn(vehicle);
         when(userService.getEntity(OWNER_EMAIL)).thenReturn(owner);
         when(maintenanceLogRepository.save(any(MaintenanceLog.class))).thenReturn(buildLog(CURRENT_KM));
@@ -184,7 +185,7 @@ class MaintenanceLogServiceTest {
         MaintenanceLogResponse response = maintenanceLogService.create(OWNER_EMAIL, VEHICLE_ID, buildRequest(CURRENT_KM));
 
         assertThat(response.expenseId()).isNull();
-        verify(expenseRepository, never()).findByIdAndVehicleIdAndVehicleOwnerEmail(any(), any(), any());
+        verify(expenseRepository, never()).save(any());
     }
 
     // ── getAll ────────────────────────────────────────────────────────────────

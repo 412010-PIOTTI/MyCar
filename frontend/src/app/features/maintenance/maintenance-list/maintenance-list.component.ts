@@ -86,6 +86,7 @@ export class MaintenanceListComponent implements OnInit {
 
   // ── Modal ─────────────────────────────────────────────────────────────────
   showRegisterModal = false;
+  detailLog: MaintenanceLogResponse | null = null;
 
   ngOnInit(): void {
     this.vehicleService
@@ -94,7 +95,7 @@ export class MaintenanceListComponent implements OnInit {
       .subscribe({
         next: (vehicles) => {
           this.vehicles = vehicles;
-          if (vehicles.length === 1) this.selectedVehicle = vehicles[0];
+          if (vehicles.length > 0) this.selectedVehicle = vehicles[0];
           if (vehicles.length > 0) this.loadAll();
         },
         error: () => { this.loadError = true; },
@@ -135,6 +136,9 @@ export class MaintenanceListComponent implements OnInit {
     this.showRegisterModal = false;
     this.loadAll();
   }
+
+  viewLog(log: MaintenanceLogResponse): void { this.detailLog = log; }
+  closeDetail(): void { this.detailLog = null; }
 
   // ── System badge helpers ──────────────────────────────────────────────────
   getLabel(system: string):     string { return this.systemMeta[system]?.label     ?? system; }

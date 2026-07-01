@@ -8,7 +8,7 @@ import ar.edu.utn.frc.mycar.domain.repository.ExpenseRepository;
 import ar.edu.utn.frc.mycar.domain.repository.MaintenanceLogRepository;
 import ar.edu.utn.frc.mycar.web.dto.request.CreateMaintenanceLogRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.MaintenanceLogResponse;
-import ar.edu.utn.frc.mycar.web.exception.ExpenseNotFoundException;
+import ar.edu.utn.frc.mycar.domain.enums.ExpenseCategory;
 import ar.edu.utn.frc.mycar.web.exception.MaintenanceLogNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,14 +33,22 @@ public class MaintenanceLogService {
             vehicle.setCurrentKm(request.getKmAtMaintenance());
         }
 
-        Expense expense = null;
-        if (request.getExpenseId() != null) {
-            expense = expenseRepository
-                    .findByIdAndVehicleIdAndVehicleOwnerEmail(request.getExpenseId(), vehicleId, ownerEmail)
-                    .orElseThrow(() -> new ExpenseNotFoundException(request.getExpenseId()));
-        }
-
         User user = userService.getEntity(ownerEmail);
+
+        Expense expense = null;
+        if (request.isCreateExpense() && request.getCost() != null) {
+            expense = Expense.builder()
+                    .vehicle(vehicle)
+                    .user(user)
+                    .category(ExpenseCategory.MANTENIMIENTO)
+                    .subcategory(request.getExpenseSubcategory())
+                    .date(request.getDate())
+                    .amount(request.getCost())
+                    .kmAtExpense(request.getKmAtMaintenance())
+                    .description(request.getDescription())
+                    .build();
+            expense = expenseRepository.save(expense);
+        }
         MaintenanceLog log = MaintenanceLog.builder()
                 .vehicle(vehicle)
                 .user(user)

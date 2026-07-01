@@ -26,7 +26,10 @@ export class MaintenanceRegisterModalComponent {
   private maintenanceSvc = inject(MaintenanceService);
   private destroyRef     = inject(DestroyRef);
 
-  readonly today = new Date().toISOString().split('T')[0];
+  readonly today = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
 
   readonly systemOptions: SystemOption[] = [
     { value: 'MOTOR',       label: 'Motor' },
@@ -39,16 +42,19 @@ export class MaintenanceRegisterModalComponent {
   ];
 
   form = this.fb.group({
-    system:          ['' as MaintenanceSystem | '', Validators.required],
-    date:            [this.today, Validators.required],
-    kmAtMaintenance: [null as number | null, [Validators.required, Validators.min(0)]],
-    workshop:        ['', [Validators.required, Validators.maxLength(100)]],
-    description:     ['', Validators.maxLength(300)],
-    cost:            [null as number | null],
-    nextServiceKm:   [null as number | null, Validators.min(0)],
-    nextServiceDate: [''],
-    expenseId:       [null as number | null],
+    system:             ['' as MaintenanceSystem | '', Validators.required],
+    date:               [this.today, Validators.required],
+    kmAtMaintenance:    [null as number | null, [Validators.required, Validators.min(0)]],
+    workshop:           ['', [Validators.required, Validators.maxLength(100)]],
+    description:        ['', Validators.maxLength(300)],
+    cost:               [null as number | null],
+    nextServiceKm:      [null as number | null, Validators.min(0)],
+    nextServiceDate:    [''],
+    createExpense:      [false],
+    expenseSubcategory: ['', Validators.maxLength(50)],
   });
+
+  get wantsExpense(): boolean { return !!this.form.get('createExpense')?.value; }
 
   loading      = false;
   generalError = '';
@@ -71,15 +77,16 @@ export class MaintenanceRegisterModalComponent {
     const v = this.form.value;
     this.maintenanceSvc
       .createMaintenanceLog(this.vehicleId, {
-        system:          v.system as MaintenanceSystem,
-        date:            v.date!,
-        kmAtMaintenance: v.kmAtMaintenance!,
-        workshop:        v.workshop!,
-        description:     v.description || null,
-        cost:            v.cost ?? null,
-        nextServiceKm:   v.nextServiceKm ?? null,
-        nextServiceDate: v.nextServiceDate || null,
-        expenseId:       v.expenseId ?? null,
+        system:             v.system as MaintenanceSystem,
+        date:               v.date!,
+        kmAtMaintenance:    v.kmAtMaintenance!,
+        workshop:           v.workshop!,
+        description:        v.description || null,
+        cost:               v.cost ?? null,
+        nextServiceKm:      v.nextServiceKm ?? null,
+        nextServiceDate:    v.nextServiceDate || null,
+        createExpense:      !!v.createExpense && v.cost != null,
+        expenseSubcategory: v.createExpense && v.expenseSubcategory ? v.expenseSubcategory : null,
       })
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.loading = false)))
       .subscribe({
