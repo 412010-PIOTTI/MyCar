@@ -27,6 +27,10 @@ application-local.properties
 application-local.yml
 *.env
 
+# Uploaded document files (local storage)
+backend/uploads/
+uploads/
+
 # ===========================
 # ANGULAR / NODE
 # ===========================

@@ -6,6 +6,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -93,5 +94,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResetTokenExpiredException.class)
     public ProblemDetail handleResetTokenExpired(ResetTokenExpiredException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    /** Returns 404 when a document is not found or does not belong to the requesting user's vehicle. */
+    @ExceptionHandler(DocumentNotFoundException.class)
+    public ProblemDetail handleDocumentNotFound(DocumentNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    /** Returns 404 when a document exists but has no file attached. */
+    @ExceptionHandler(DocumentFileNotFoundException.class)
+    public ProblemDetail handleDocumentFileNotFound(DocumentFileNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    /** Returns 400 when an uploaded file fails type/size validation. */
+    @ExceptionHandler(InvalidFileException.class)
+    public ProblemDetail handleInvalidFile(InvalidFileException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    /** Returns 400 when the uploaded file exceeds the configured max size. */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ProblemDetail handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "El archivo supera el tamaño máximo permitido (10MB).");
     }
 }

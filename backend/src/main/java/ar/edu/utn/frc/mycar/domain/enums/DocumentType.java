@@ -6,7 +6,6 @@ public enum DocumentType {
     ITV,
     SEGURO,
     LICENCIA,
-    TITULO,
-    FACTURA_TALLER,
+    PATENTE,
     OTRO
 }
