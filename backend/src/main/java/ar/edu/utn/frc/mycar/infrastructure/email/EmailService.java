@@ -72,6 +72,63 @@ public class EmailService {
         }
     }
 
+    public void sendAlertNotification(String toEmail, String userName,
+                                      String alertTitle, String vehicleDesc, String alertDetail) {
+        if (apiKey == null || apiKey.isBlank()) {
+            log.debug("SendGrid API key not configured — skipping alert email to {}", toEmail);
+            return;
+        }
+
+        Email from = new Email(fromEmail, "MyCar");
+        Email to = new Email(toEmail);
+        String subject = "⚠ Alerta urgente: " + alertTitle;
+        Content content = new Content("text/html",
+                buildAlertEmailBody(userName, alertTitle, vehicleDesc, alertDetail));
+        Mail mail = new Mail(from, subject, to, content);
+
+        SendGrid sg = new SendGrid(apiKey);
+        Request request = new Request();
+        try {
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+            sg.api(request);
+        } catch (IOException e) {
+            log.error("Failed to send alert email to {}: {}", toEmail, e.getMessage());
+        }
+    }
+
+    private String buildAlertEmailBody(String userName, String alertTitle,
+                                        String vehicleDesc, String alertDetail) {
+        return """
+                <!DOCTYPE html>
+                <html lang="es">
+                <head><meta charset="UTF-8"></head>
+                <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+                  <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 8px;
+                              padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,.08);">
+                    <h1 style="color: #2563eb; font-size: 22px; margin-bottom: 8px;">MyCar</h1>
+                    <h2 style="color: #b91c1c; font-size: 18px; margin-bottom: 8px;">
+                      ⚠ Alerta urgente activa
+                    </h2>
+                    <p style="color: #475569; font-size: 14px; margin-bottom: 20px;">
+                      Hola <strong>%s</strong>, tu vehículo tiene una alerta que requiere atención inmediata.
+                    </p>
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #ef4444;
+                                border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+                      <p style="color: #1e293b; font-weight: 600; font-size: 15px; margin: 0 0 6px;">%s</p>
+                      <p style="color: #64748b; font-size: 13px; margin: 0 0 4px;">🚗 %s</p>
+                      <p style="color: #64748b; font-size: 13px; margin: 0;">%s</p>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 12px; margin-top: 24px;">
+                      Entrá a MyCar para gestionar tus alertas y tomar acción.
+                    </p>
+                  </div>
+                </body>
+                </html>
+                """.formatted(userName, alertTitle, vehicleDesc, alertDetail);
+    }
+
     private String buildResetEmailBody(String resetLink) {
         return """
                 <!DOCTYPE html>

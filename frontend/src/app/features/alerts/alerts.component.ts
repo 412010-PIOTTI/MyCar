@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { UnderConstructionComponent } from '../../shared/components/under-construction/under-construction.component';
+import { AlertsListComponent } from './alerts-list/alerts-list.component';
 
 @Component({
   selector: 'app-alerts',
   standalone: true,
-  imports: [UnderConstructionComponent],
-  template: `<app-under-construction moduleName="Alertas"></app-under-construction>`,
+  imports: [AlertsListComponent],
+  template: `<app-alerts-list />`,
 })
 export class AlertsComponent {}

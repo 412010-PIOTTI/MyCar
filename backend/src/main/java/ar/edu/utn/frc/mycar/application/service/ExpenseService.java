@@ -3,6 +3,7 @@ package ar.edu.utn.frc.mycar.application.service;
 import ar.edu.utn.frc.mycar.domain.entity.Expense;
 import ar.edu.utn.frc.mycar.domain.entity.User;
 import ar.edu.utn.frc.mycar.domain.entity.Vehicle;
+import ar.edu.utn.frc.mycar.domain.enums.AlertType;
 import ar.edu.utn.frc.mycar.domain.enums.ExpenseCategory;
 import ar.edu.utn.frc.mycar.domain.enums.ExpenseStatus;
 import ar.edu.utn.frc.mycar.domain.repository.ExpenseRepository;
@@ -30,6 +31,7 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final VehicleService vehicleService;
     private final UserService userService;
+    private final AlertService alertService;
 
     @Transactional
     public ExpenseResponse create(String ownerEmail, Long vehicleId, CreateExpenseRequest request) {
@@ -52,7 +54,15 @@ public class ExpenseService {
                 .expiryDate(request.getExpiryDate())
                 .build();
 
-        return toResponse(expenseRepository.save(expense));
+        ExpenseResponse response = toResponse(expenseRepository.save(expense));
+
+        if (request.getExpiryDate() != null) {
+            String title = "Vencimiento: " + categoryLabel(request.getCategory())
+                    + (request.getSubcategory() != null ? " - " + request.getSubcategory() : "");
+            alertService.createAutoAlert(vehicle, user, title, AlertType.DATE, request.getExpiryDate(), null);
+        }
+
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -170,6 +180,17 @@ public class ExpenseService {
                 computeStatus(expense.getExpiryDate()),
                 expense.getCreatedAt()
         );
+    }
+
+    private String categoryLabel(ExpenseCategory category) {
+        return switch (category) {
+            case OPERATIVO       -> "Operativo";
+            case MANTENIMIENTO   -> "Mantenimiento";
+            case IMPUESTO_SEGURO -> "Impuesto/Seguro";
+            case INFRACCION      -> "Infracción";
+            case MEJORA          -> "Mejora";
+            case ADMINISTRATIVO  -> "Administrativo";
+        };
     }
 
     private ExpenseStatus computeStatus(LocalDate expiryDate) {

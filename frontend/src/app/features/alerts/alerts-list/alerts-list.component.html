@@ -1,0 +1,182 @@
+<div class="p-6">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <h1 class="text-2xl font-bold text-text-primary mb-6">Alertas de Sistema</h1>
+
+  <!-- ── Loading skeleton ───────────────────────────────────────────────── -->
+  <div *ngIf="loading" class="space-y-4 animate-pulse">
+    <div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="h-[88px] bg-surface rounded-md"></div>
+      <div class="h-[88px] bg-surface rounded-md"></div>
+      <div class="h-[88px] bg-surface rounded-md"></div>
+    </div>
+    <div class="h-5 w-48 bg-surface rounded"></div>
+    <div *ngFor="let i of [1,2]" class="h-28 bg-surface rounded-md"></div>
+    <div class="h-5 w-48 bg-surface rounded mt-6"></div>
+    <div *ngFor="let i of [1,2]" class="h-20 bg-surface rounded-md"></div>
+  </div>
+
+  <!-- ── Error state ────────────────────────────────────────────────────── -->
+  <div *ngIf="loadError && !loading" class="card text-center py-10">
+    <p class="text-danger font-medium mb-2">No se pudo cargar las alertas</p>
+    <button class="btn-secondary text-sm" (click)="reload()">Reintentar</button>
+  </div>
+
+  <!-- ── No vehicles ────────────────────────────────────────────────────── -->
+  <div *ngIf="!loading && !loadError && vehicles.length === 0"
+       class="card flex flex-col items-center py-16 gap-3 text-center">
+    <span class="text-4xl">🔔</span>
+    <p class="text-text-primary font-medium">No tenés vehículos registrados</p>
+    <p class="text-sm text-text-secondary">Agregá un vehículo para empezar a recibir alertas</p>
+  </div>
+
+  <!-- ── Main content ───────────────────────────────────────────────────── -->
+  <ng-container *ngIf="!loading && !loadError && vehicles.length > 0">
+
+    <!-- ── Summary stat cards ────────────────────────────────────────── -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+
+      <!-- URGENTE -->
+      <div class="bg-white border border-surface-border rounded-md px-4 py-3 flex items-center justify-between shadow-card">
+        <div>
+          <p class="text-[10px] font-semibold text-danger uppercase tracking-widest">Urgente</p>
+          <p class="text-4xl font-bold text-danger mt-1">{{ padCount(urgentAlerts.length) }}</p>
+        </div>
+        <span class="text-3xl opacity-70">⚠</span>
+      </div>
+
+      <!-- ADVERTENCIA -->
+      <div class="bg-white border border-surface-border rounded-md px-4 py-3 flex items-center justify-between shadow-card">
+        <div>
+          <p class="text-[10px] font-semibold text-warning uppercase tracking-widest">Advertencia</p>
+          <p class="text-4xl font-bold text-warning mt-1">{{ padCount(warningAlerts.length) }}</p>
+        </div>
+        <span class="text-3xl opacity-70">⚠</span>
+      </div>
+
+      <!-- INFORMATIVA -->
+      <div class="bg-white border border-surface-border rounded-md px-4 py-3 flex items-center justify-between shadow-card">
+        <div>
+          <p class="text-[10px] font-semibold text-primary uppercase tracking-widest">Informativa</p>
+          <p class="text-4xl font-bold text-primary mt-1">{{ padCount(infoAlerts.length) }}</p>
+        </div>
+        <span class="text-3xl opacity-70">ℹ</span>
+      </div>
+
+    </div>
+
+    <!-- ── Todas en cero ─────────────────────────────────────────────── -->
+    <div *ngIf="allAlerts.length === 0"
+         class="card flex flex-col items-center py-16 gap-3 text-center">
+      <p class="text-text-primary font-medium">Sin alertas activas</p>
+      <p class="text-sm text-text-secondary">Todos tus vehículos están al día</p>
+    </div>
+
+    <!-- ── Críticas & Urgentes ───────────────────────────────────────── -->
+    <div *ngIf="urgentAlerts.length > 0" class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-text-primary">Críticas &amp; Urgentes</h2>
+        <span class="bg-red-100 text-danger text-[10px] font-semibold px-3 py-1 rounded-full whitespace-nowrap">
+          Acción requerida inmediata
+        </span>
+      </div>
+
+      <div class="space-y-3">
+        <div *ngFor="let e of urgentAlerts; trackBy: trackById"
+             class="relative bg-red-50 border border-red-200 rounded-md overflow-hidden">
+          <!-- Left accent bar -->
+          <div class="absolute inset-y-0 left-0 w-1 bg-danger"></div>
+
+          <div class="pl-5 pr-4 py-4 flex items-start gap-3">
+            <!-- Icon -->
+            <div class="flex-shrink-0 bg-red-100 rounded-md w-10 h-10 flex items-center justify-center text-lg">
+              {{ e.icon }}
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-sm font-semibold text-text-primary">
+                  {{ e.alert.title }} — {{ e.vehicle.brand }} {{ e.vehicle.model }}
+                  <span class="font-normal text-text-secondary">({{ e.vehicle.plate }})</span>
+                </p>
+                <span class="flex-shrink-0 bg-red-100 text-danger text-[10px] font-semibold px-2.5 py-0.5 rounded-full">
+                  {{ e.statusBadge }}
+                </span>
+              </div>
+              <p class="text-[11px] text-text-secondary mt-2 font-mono tracking-tight">
+                {{ e.metaLine }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Próximos Vencimientos ─────────────────────────────────────── -->
+    <div *ngIf="warningAlerts.length > 0" class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-text-primary">Próximos Vencimientos</h2>
+        <span class="bg-amber-100 text-warning text-[10px] font-semibold px-3 py-1 rounded-full whitespace-nowrap">
+          Requiere atención próxima
+        </span>
+      </div>
+
+      <div class="space-y-3">
+        <div *ngFor="let e of warningAlerts; trackBy: trackById"
+             class="bg-white border border-surface-border rounded-md px-4 py-3 shadow-card">
+          <div class="flex items-start gap-3">
+            <!-- Icon -->
+            <div class="flex-shrink-0 bg-amber-100 rounded-md w-10 h-10 flex items-center justify-center text-lg">
+              🛡
+            </div>
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <p class="text-sm font-semibold text-text-primary">
+                  {{ e.alert.title }} —
+                  <span class="font-normal text-text-secondary">{{ e.vehicle.brand }} {{ e.vehicle.model }}</span>
+                </p>
+                <span class="flex-shrink-0 text-xs text-warning font-medium">
+                  {{ e.remaining }}
+                </span>
+              </div>
+              <!-- Progress bar -->
+              <div class="w-full bg-surface-border rounded-full h-1.5">
+                <div
+                  class="bg-warning h-1.5 rounded-full"
+                  [style.width.%]="e.progress"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Informativas ──────────────────────────────────────────────── -->
+    <div *ngIf="infoAlerts.length > 0">
+      <h2 class="text-lg font-semibold text-text-primary mb-4">Informativas</h2>
+
+      <div class="space-y-2">
+        <div *ngFor="let e of infoAlerts; trackBy: trackById"
+             class="bg-white border border-surface-border rounded-md px-4 py-3 flex items-center gap-3 shadow-card">
+          <div class="flex-shrink-0 bg-blue-50 rounded-md w-9 h-9 flex items-center justify-center">
+            <span class="text-primary text-base">ℹ</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-text-primary">
+              {{ e.alert.title }}
+              <span class="font-normal text-text-secondary">
+                — {{ e.vehicle.brand }} {{ e.vehicle.model }} ({{ e.vehicle.plate }})
+              </span>
+            </p>
+            <p class="text-[11px] text-text-muted mt-0.5">{{ e.metaLine }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>
