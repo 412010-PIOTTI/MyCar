@@ -10,12 +10,11 @@ import { AlertResponse } from '../../../core/models/alert.model';
 interface EnrichedAlert {
   alert:       AlertResponse;
   vehicle:     Vehicle;
-  // Pre-computed at load time — never recalculated during change detection
   icon:        string;
   statusBadge: string;
   metaLine:    string;
   remaining:   string;
-  progress:    number;   // 0–100
+  progress:    number;
 }
 
 @Component({
@@ -29,16 +28,38 @@ export class AlertsListComponent implements OnInit {
   private vehicleService = inject(VehicleService);
   private alertService   = inject(AlertService);
 
-  vehicles: Vehicle[]        = [];
+  vehicles: Vehicle[]             = [];
+  selectedVehicle: Vehicle | null = null;
+  vehiclesLoading = true;
+
   allAlerts: EnrichedAlert[] = [];
-  loading   = true;
+  loading   = false;
   loadError = false;
+
+  get allVehiclesMode(): boolean { return this.selectedVehicle === null && this.vehicles.length > 0; }
 
   get urgentAlerts():  EnrichedAlert[] { return this.allAlerts.filter(a => a.alert.urgencyLevel === 'URGENTE'); }
   get warningAlerts(): EnrichedAlert[] { return this.allAlerts.filter(a => a.alert.urgencyLevel === 'ADVERTENCIA'); }
   get infoAlerts():    EnrichedAlert[] { return this.allAlerts.filter(a => a.alert.urgencyLevel === 'INFORMATIVA'); }
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.vehicleService.getVehicles()
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.vehiclesLoading = false)))
+      .subscribe({
+        next: (vehicles) => {
+          this.vehicles = vehicles;
+          if (vehicles.length === 1) this.selectedVehicle = vehicles[0];
+          if (vehicles.length > 0) this.load();
+        },
+        error: () => { this.loadError = true; },
+      });
+  }
+
+  onVehicleChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedVehicle = value === '' ? null : (this.vehicles.find(v => v.id === Number(value)) ?? null);
+    this.load();
+  }
 
   reload(): void { this.load(); }
 
@@ -46,39 +67,33 @@ export class AlertsListComponent implements OnInit {
 
   trackById(_: number, e: EnrichedAlert): number { return e.alert.id; }
 
-  // ── Private ───────────────────────────────────────────────────────────────
-
   private load(): void {
     this.loading   = true;
     this.loadError = false;
     this.allAlerts = [];
 
-    this.vehicleService.getVehicles()
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        switchMap(vehicles => {
-          this.vehicles = vehicles;
-          if (vehicles.length === 0) return of([] as EnrichedAlert[]);
-          return forkJoin(
-            vehicles.map(v =>
-              this.alertService.getAlerts(v.id).pipe(
-                map(alerts => alerts.map(a => this.enrich(a, v)))
-              )
+    const source$ = this.selectedVehicle
+      ? this.alertService.getAlerts(this.selectedVehicle.id).pipe(
+          map(alerts => alerts.map(a => this.enrich(a, this.selectedVehicle!)))
+        )
+      : forkJoin(
+          this.vehicles.map(v =>
+            this.alertService.getAlerts(v.id).pipe(
+              map(alerts => alerts.map(a => this.enrich(a, v)))
             )
-          ).pipe(map(results => results.flat()));
-        }),
-        finalize(() => (this.loading = false))
-      )
+          )
+        ).pipe(map(results => results.flat()));
+
+    source$
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.loading = false)))
       .subscribe({
-        next:  (alerts) => { this.allAlerts = alerts; },
-        error: ()       => { this.loadError = true; },
+        next:  alerts => { this.allAlerts = alerts; },
+        error: ()     => { this.loadError = true; },
       });
   }
 
-  /** Compute all display values once, using a fixed timestamp to avoid NG0100. */
   private enrich(alert: AlertResponse, vehicle: Vehicle): EnrichedAlert {
-    const now = Date.now();  // single snapshot for this alert
-
+    const now = Date.now();
     return {
       alert,
       vehicle,
@@ -91,48 +106,40 @@ export class AlertsListComponent implements OnInit {
   }
 
   private computeStatusBadge(alert: AlertResponse, vehicle: Vehicle, now: number): string {
-    if (alert.alertType === 'KM' && alert.alertKm != null) {
+    if (alert.alertType === 'KM' && alert.alertKm != null)
       return vehicle.currentKm >= alert.alertKm ? 'Km Excedido' : 'Próximo';
-    }
-    if (alert.alertType === 'DATE' && alert.alertDate) {
+    if (alert.alertType === 'DATE' && alert.alertDate)
       return now >= new Date(alert.alertDate).getTime() ? 'Vencido' : 'Vence Pronto';
-    }
     return '';
   }
 
   private computeMetaLine(alert: AlertResponse, vehicle: Vehicle): string {
-    if (alert.alertType === 'DATE' && alert.alertDate) {
+    if (alert.alertType === 'DATE' && alert.alertDate)
       return `📅 Vence: ${this.formatDate(alert.alertDate)}`;
-    }
-    if (alert.alertType === 'KM' && alert.alertKm != null) {
+    if (alert.alertType === 'KM' && alert.alertKm != null)
       return `⊙ KM actual: ${this.formatKm(vehicle.currentKm)}    ⏱ Límite: ${this.formatKm(alert.alertKm)}`;
-    }
     return '';
   }
 
   private computeRemaining(alert: AlertResponse, vehicle: Vehicle, now: number): string {
     if (alert.alertType === 'KM' && alert.alertKm != null) {
       const remaining = alert.alertKm - vehicle.currentKm;
-      if (remaining <= 0) return 'Límite superado';
-      return `A ${remaining.toLocaleString('es-AR')} km del límite`;
+      return remaining <= 0 ? 'Límite superado' : `A ${remaining.toLocaleString('es-AR')} km del límite`;
     }
     if (alert.alertType === 'DATE' && alert.alertDate) {
       const diffDays = Math.ceil((new Date(alert.alertDate).getTime() - now) / 86_400_000);
-      if (diffDays <= 0) return 'Vencido';
-      return `Faltan ${diffDays} día${diffDays !== 1 ? 's' : ''}`;
+      return diffDays <= 0 ? 'Vencido' : `Faltan ${diffDays} día${diffDays !== 1 ? 's' : ''}`;
     }
     return '';
   }
 
   private computeProgress(alert: AlertResponse, vehicle: Vehicle, now: number): number {
-    if (alert.alertType === 'KM' && alert.alertKm != null) {
+    if (alert.alertType === 'KM' && alert.alertKm != null)
       return Math.min(100, (vehicle.currentKm / alert.alertKm) * 100);
-    }
     if (alert.alertType === 'DATE' && alert.alertDate) {
       const alertDate = new Date(alert.alertDate).getTime();
       const startDate = alertDate - Math.max(alert.advanceDays, 1) * 86_400_000;
-      const total     = alertDate - startDate;
-      return Math.min(100, Math.max(0, ((now - startDate) / total) * 100));
+      return Math.min(100, Math.max(0, ((now - startDate) / (alertDate - startDate)) * 100));
     }
     return 0;
   }
