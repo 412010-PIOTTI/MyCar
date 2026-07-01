@@ -142,16 +142,32 @@ END
 GO
 
 -- ── 4. Mantenimiento ─────────────────────────────────────────────────────
--- Primero corrige el esquema: la columna 'type' (MaintenanceType antiguo)
--- persiste como NOT NULL tras el rename a 'system' con ddl-auto=update.
--- Se vuelve nullable para que los INSERT funcionen.
-IF EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_NAME = 'maintenance_logs'
-      AND COLUMN_NAME = 'type'
-      AND IS_NULLABLE = 'NO'
-)
+-- Corrige columnas legacy que quedaron NOT NULL por ddl-auto=update:
+--   'type'          → viejo MaintenanceType, reemplazado por 'system'
+--   'km_at_service' → renombrado a 'km_at_maintenance'
+--   'registered_by' → reemplazado por 'user_id'
+-- También elimina constraints generadas por Hibernate que usan valores de
+-- enums viejos (SISTEMA_ELECTRICO en lugar de ELECTRICO, etc.).
+
+IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK__maintenanc__type__14270015'
+           AND parent_object_id = OBJECT_ID('maintenance_logs'))
+    ALTER TABLE maintenance_logs DROP CONSTRAINT CK__maintenanc__type__14270015;
+
+IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK__maintenan__syste__412EB0B6'
+           AND parent_object_id = OBJECT_ID('maintenance_logs'))
+    ALTER TABLE maintenance_logs DROP CONSTRAINT CK__maintenan__syste__412EB0B6;
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'maintenance_logs' AND COLUMN_NAME = 'type' AND IS_NULLABLE = 'NO')
     ALTER TABLE maintenance_logs ALTER COLUMN [type] NVARCHAR(30) NULL;
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'maintenance_logs' AND COLUMN_NAME = 'km_at_service' AND IS_NULLABLE = 'NO')
+    ALTER TABLE maintenance_logs ALTER COLUMN km_at_service INT NULL;
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'maintenance_logs' AND COLUMN_NAME = 'registered_by' AND IS_NULLABLE = 'NO')
+    ALTER TABLE maintenance_logs ALTER COLUMN registered_by BIGINT NULL;
 GO
 
 DECLARE @u2  BIGINT = (SELECT id FROM users    WHERE email = 'test@mycar.app');
