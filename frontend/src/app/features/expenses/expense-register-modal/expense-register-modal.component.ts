@@ -28,7 +28,10 @@ export class ExpenseRegisterModalComponent implements OnInit {
   private expenseService = inject(ExpenseService);
   private destroyRef = inject(DestroyRef);
 
-  readonly today = new Date().toISOString().split('T')[0];
+  readonly today = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
 
   readonly categoryOptions: CategoryOption[] = [
     { value: 'OPERATIVO',       label: 'Operativos',          icon: '⛽', subcategoryHint: 'Ej: Combustible, Peaje, Estacionamiento' },

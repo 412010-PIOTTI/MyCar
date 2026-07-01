@@ -4,11 +4,13 @@ import ar.edu.utn.frc.mycar.domain.entity.Expense;
 import ar.edu.utn.frc.mycar.domain.entity.MaintenanceLog;
 import ar.edu.utn.frc.mycar.domain.entity.User;
 import ar.edu.utn.frc.mycar.domain.entity.Vehicle;
+import ar.edu.utn.frc.mycar.domain.enums.AlertType;
+import ar.edu.utn.frc.mycar.domain.enums.ExpenseCategory;
+import ar.edu.utn.frc.mycar.domain.enums.MaintenanceSystem;
 import ar.edu.utn.frc.mycar.domain.repository.ExpenseRepository;
 import ar.edu.utn.frc.mycar.domain.repository.MaintenanceLogRepository;
 import ar.edu.utn.frc.mycar.web.dto.request.CreateMaintenanceLogRequest;
 import ar.edu.utn.frc.mycar.web.dto.response.MaintenanceLogResponse;
-import ar.edu.utn.frc.mycar.domain.enums.ExpenseCategory;
 import ar.edu.utn.frc.mycar.web.exception.MaintenanceLogNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class MaintenanceLogService {
     private final ExpenseRepository expenseRepository;
     private final VehicleService vehicleService;
     private final UserService userService;
+    private final AlertService alertService;
 
     @Transactional
     public MaintenanceLogResponse create(String ownerEmail, Long vehicleId, CreateMaintenanceLogRequest request) {
@@ -63,7 +66,18 @@ public class MaintenanceLogService {
                 .expense(expense)
                 .build();
 
-        return toResponse(maintenanceLogRepository.save(log));
+        MaintenanceLogResponse response = toResponse(maintenanceLogRepository.save(log));
+
+        if (request.getNextServiceKm() != null) {
+            String title = "Próximo servicio " + systemLabel(request.getSystem()) + ": " + request.getNextServiceKm() + " km";
+            alertService.createAutoAlert(vehicle, user, title, AlertType.KM, null, request.getNextServiceKm());
+        }
+        if (request.getNextServiceDate() != null) {
+            String title = "Próximo servicio " + systemLabel(request.getSystem()) + ": " + request.getNextServiceDate();
+            alertService.createAutoAlert(vehicle, user, title, AlertType.DATE, request.getNextServiceDate(), null);
+        }
+
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -83,6 +97,18 @@ public class MaintenanceLogService {
                 .findByIdAndVehicleIdAndVehicleOwnerEmail(logId, vehicleId, ownerEmail)
                 .map(this::toResponse)
                 .orElseThrow(() -> new MaintenanceLogNotFoundException(logId));
+    }
+
+    private String systemLabel(MaintenanceSystem system) {
+        return switch (system) {
+            case MOTOR      -> "Motor";
+            case TRANSMISION -> "Transmisión";
+            case FRENOS     -> "Frenos";
+            case ELECTRICO  -> "Eléctrico";
+            case SUSPENSION -> "Suspensión";
+            case CARROCERIA -> "Carrocería";
+            case OTRO       -> "General";
+        };
     }
 
     private MaintenanceLogResponse toResponse(MaintenanceLog log) {

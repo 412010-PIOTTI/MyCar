@@ -233,3 +233,50 @@ BEGIN
 
 END
 GO
+
+-- ── 5. Alertas ───────────────────────────────────────────────────────────────
+DECLARE @u3  BIGINT = (SELECT id FROM users    WHERE email = 'test@mycar.app');
+DECLARE @v1c BIGINT = (SELECT id FROM vehicles WHERE plate = 'ABC123');
+DECLARE @v2c BIGINT = (SELECT id FROM vehicles WHERE plate = 'DEF456');
+
+IF NOT EXISTS (SELECT 1 FROM alerts WHERE user_id = @u3)
+BEGIN
+
+    -- ── Toyota Corolla ABC123 (48.500 km actual) ──────────────────────────
+
+    -- URGENTE: VTV vencida hace 20 días
+    INSERT INTO alerts (vehicle_id, user_id, title, alert_type, alert_date, alert_km, advance_days, urgency_level, notified, notified_at, active, created_at)
+    VALUES (@v1c, @u3, 'VTV / Revisión Técnica', 'DATE', '2026-06-10', NULL, 30, 'URGENTE', 0, NULL, 1, GETDATE());
+
+    -- URGENTE: Aceite excedido (límite 48.000 km, actual 48.500)
+    INSERT INTO alerts (vehicle_id, user_id, title, alert_type, alert_date, alert_km, advance_days, urgency_level, notified, notified_at, active, created_at)
+    VALUES (@v1c, @u3, 'Cambio de Aceite', 'KM', NULL, 48000, 30, 'URGENTE', 0, NULL, 1, GETDATE());
+
+    -- ADVERTENCIA: Seguro vence en 15 días (advance_days=30)
+    INSERT INTO alerts (vehicle_id, user_id, title, alert_type, alert_date, alert_km, advance_days, urgency_level, notified, notified_at, active, created_at)
+    VALUES (@v1c, @u3, 'Renovación de Seguro', 'DATE', '2026-07-15', NULL, 30, 'ADVERTENCIA', 0, NULL, 1, GETDATE());
+
+    -- INFORMATIVA: Próximo service a 50.000 km (1.500 km libres)
+    INSERT INTO alerts (vehicle_id, user_id, title, alert_type, alert_date, alert_km, advance_days, urgency_level, notified, notified_at, active, created_at)
+    VALUES (@v1c, @u3, 'Service 50.000 km', 'KM', NULL, 50000, 30, 'INFORMATIVA', 0, NULL, 1, GETDATE());
+
+    -- ── Ford Focus DEF456 (72.000 km actual) ─────────────────────────────
+
+    -- URGENTE: Seguro vencido hace 25 días
+    INSERT INTO alerts (vehicle_id, user_id, title, alert_type, alert_date, alert_km, advance_days, urgency_level, notified, notified_at, active, created_at)
+    VALUES (@v2c, @u3, 'Póliza de Seguro Vencida', 'DATE', '2026-06-05', NULL, 30, 'URGENTE', 0, NULL, 1, GETDATE());
+
+    -- ADVERTENCIA: Service a sólo 500 km
+    INSERT INTO alerts (vehicle_id, user_id, title, alert_type, alert_date, alert_km, advance_days, urgency_level, notified, notified_at, active, created_at)
+    VALUES (@v2c, @u3, 'Service Motor 72.500 km', 'KM', NULL, 72500, 30, 'ADVERTENCIA', 0, NULL, 1, GETDATE());
+
+    -- ADVERTENCIA: Patente vence en 10 días
+    INSERT INTO alerts (vehicle_id, user_id, title, alert_type, alert_date, alert_km, advance_days, urgency_level, notified, notified_at, active, created_at)
+    VALUES (@v2c, @u3, 'Pago de Patente', 'DATE', '2026-07-10', NULL, 30, 'ADVERTENCIA', 0, NULL, 1, GETDATE());
+
+    -- INFORMATIVA: RTO vence en 3 meses
+    INSERT INTO alerts (vehicle_id, user_id, title, alert_type, alert_date, alert_km, advance_days, urgency_level, notified, notified_at, active, created_at)
+    VALUES (@v2c, @u3, 'RTO / Revisión Técnica Obligatoria', 'DATE', '2026-10-15', NULL, 30, 'INFORMATIVA', 0, NULL, 1, GETDATE());
+
+END
+GO
