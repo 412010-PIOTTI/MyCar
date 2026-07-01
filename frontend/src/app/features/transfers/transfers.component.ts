@@ -46,7 +46,7 @@ export class TransfersComponent implements OnInit {
       .subscribe({
         next: (vehicles) => {
           this.vehicles = vehicles;
-          if (vehicles.length === 1) this.selectedVehicle = vehicles[0];
+          if (vehicles.length > 0) this.selectedVehicle = vehicles[0];
           if (this.selectedVehicle) this.loadActiveToken();
         },
         error: () => { this.loadError = true; },
@@ -54,12 +54,12 @@ export class TransfersComponent implements OnInit {
   }
 
   onVehicleChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    this.selectedVehicle = value
-      ? (this.vehicles.find((v) => v.id === Number(value)) ?? null)
-      : null;
+    const id = Number((event.target as HTMLSelectElement).value);
+    const vehicle = this.vehicles.find((v) => v.id === id);
+    if (!vehicle) return;
+    this.selectedVehicle = vehicle;
     this.activeToken = null;
-    if (this.selectedVehicle) this.loadActiveToken();
+    this.loadActiveToken();
   }
 
   /** The active-token card is scoped to the selected vehicle (requires current ownership). */

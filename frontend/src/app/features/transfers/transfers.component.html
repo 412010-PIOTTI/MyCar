@@ -12,7 +12,6 @@
       @if (!vehiclesLoading) {
         @if (vehicles.length > 1) {
           <select (change)="onVehicleChange($event)" class="form-input text-sm pr-8">
-            <option value="" [selected]="!selectedVehicle">Seleccioná un vehículo</option>
             @for (v of vehicles; track v.id) {
               <option [value]="v.id" [selected]="selectedVehicle?.id === v.id">
                 {{ v.brand }} {{ v.model }} · {{ v.plate }}
@@ -38,15 +37,6 @@
       <span class="text-5xl">🚗</span>
       <p class="text-text-primary font-medium">No tenés vehículos registrados</p>
       <p class="text-sm text-text-secondary">Agregá un vehículo para poder transferir su titularidad</p>
-    </div>
-  }
-
-  <!-- ── Select vehicle prompt (multi-vehicle, none selected) ──────────── -->
-  @if (!vehiclesLoading && vehicles.length > 1 && !selectedVehicle) {
-    <div class="card flex flex-col items-center py-16 gap-3 text-center">
-      <span class="text-5xl">🔄</span>
-      <p class="text-text-primary font-medium">Seleccioná un vehículo</p>
-      <p class="text-sm text-text-secondary">Elegí un vehículo del selector para generar su código de transferencia</p>
     </div>
   }
 
