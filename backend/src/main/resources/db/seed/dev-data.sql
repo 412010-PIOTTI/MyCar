@@ -140,3 +140,80 @@ BEGIN
 
 END
 GO
+
+-- ── 4. Mantenimiento ─────────────────────────────────────────────────────
+-- Primero corrige el esquema: la columna 'type' (MaintenanceType antiguo)
+-- persiste como NOT NULL tras el rename a 'system' con ddl-auto=update.
+-- Se vuelve nullable para que los INSERT funcionen.
+IF EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'maintenance_logs'
+      AND COLUMN_NAME = 'type'
+      AND IS_NULLABLE = 'NO'
+)
+    ALTER TABLE maintenance_logs ALTER COLUMN [type] NVARCHAR(30) NULL;
+GO
+
+DECLARE @u2  BIGINT = (SELECT id FROM users    WHERE email = 'test@mycar.app');
+DECLARE @v1b BIGINT = (SELECT id FROM vehicles WHERE plate = 'ABC123');
+DECLARE @v2b BIGINT = (SELECT id FROM vehicles WHERE plate = 'DEF456');
+
+IF NOT EXISTS (SELECT 1 FROM maintenance_logs WHERE vehicle_id = @v1b)
+BEGIN
+
+    -- ── Toyota Corolla (ABC123) ─────────────────────────────────────────────
+
+    -- Service 40.000 km
+    INSERT INTO maintenance_logs (vehicle_id, user_id, system, date, km_at_maintenance, workshop, description, cost, next_service_km, next_service_date, created_at)
+    VALUES (@v1b, @u2, 'MOTOR', '2025-08-10', 40000, 'Centro Integral Toyota Córdoba',
+            'Service 40.000 km — cambio de aceite 5W30, filtro de aceite y filtro de aire', 32000.00, 45000, NULL, GETDATE());
+
+    -- Frenos
+    INSERT INTO maintenance_logs (vehicle_id, user_id, system, date, km_at_maintenance, workshop, description, cost, next_service_km, next_service_date, created_at)
+    VALUES (@v1b, @u2, 'FRENOS', '2025-11-04', 43500, 'Taller Díaz — Especialistas en Frenos',
+            'Cambio pastillas traseras Brembo y ajuste de mordaza', 18500.00, NULL, '2026-11-01', GETDATE());
+
+    -- Service 45.000 km (coincide con gasto registrado en Feb 2026)
+    INSERT INTO maintenance_logs (vehicle_id, user_id, system, date, km_at_maintenance, workshop, description, cost, next_service_km, next_service_date, created_at)
+    VALUES (@v1b, @u2, 'MOTOR', '2026-02-20', 45000, 'Centro Integral Toyota Córdoba',
+            'Service 45.000 km — aceite, filtros, correa de distribución y bujías', 38000.00, 50000, NULL, GETDATE());
+
+    -- Suspensión
+    INSERT INTO maintenance_logs (vehicle_id, user_id, system, date, km_at_maintenance, workshop, description, cost, next_service_km, next_service_date, created_at)
+    VALUES (@v1b, @u2, 'SUSPENSION', '2026-04-15', 46800, 'Autoservicio Norte',
+            'Cambio de amortiguadores delanteros KYB y revisión de bujes', 27500.00, NULL, '2027-04-01', GETDATE());
+
+    -- Neumáticos (coincide con gasto Jun 2026)
+    INSERT INTO maintenance_logs (vehicle_id, user_id, system, date, km_at_maintenance, workshop, description, cost, next_service_km, next_service_date, created_at)
+    VALUES (@v1b, @u2, 'CARROCERIA', '2026-06-10', 48500, 'Neumáticos Córdoba Sur',
+            '4 cubiertas Bridgestone Turanza 195/65 R15 + balanceo y alineación', 62000.00, NULL, '2030-01-01', GETDATE());
+
+END
+
+IF NOT EXISTS (SELECT 1 FROM maintenance_logs WHERE vehicle_id = @v2b)
+BEGIN
+
+    -- ── Ford Focus (DEF456) ─────────────────────────────────────────────────
+
+    -- Eléctrico
+    INSERT INTO maintenance_logs (vehicle_id, user_id, system, date, km_at_maintenance, workshop, description, cost, next_service_km, next_service_date, created_at)
+    VALUES (@v2b, @u2, 'ELECTRICO', '2025-07-20', 68000, 'Electromecánica Rodríguez',
+            'Cambio de batería Bosch 60Ah y revisión del alternador', 24000.00, NULL, '2028-07-01', GETDATE());
+
+    -- Frenos (coincide con gasto Feb 2026)
+    INSERT INTO maintenance_logs (vehicle_id, user_id, system, date, km_at_maintenance, workshop, description, cost, next_service_km, next_service_date, created_at)
+    VALUES (@v2b, @u2, 'FRENOS', '2026-02-18', 70800, 'Taller Díaz — Especialistas en Frenos',
+            'Cambio pastillas y discos delanteros, limpieza de pinzas traseras', 54000.00, 80000, NULL, GETDATE());
+
+    -- Transmisión
+    INSERT INTO maintenance_logs (vehicle_id, user_id, system, date, km_at_maintenance, workshop, description, cost, next_service_km, next_service_date, created_at)
+    VALUES (@v2b, @u2, 'TRANSMISION', '2026-03-12', 71200, 'Transmisiones Del Sur',
+            'Cambio de aceite de caja automática y filtro interno', 16800.00, 80000, NULL, GETDATE());
+
+    -- Service aceite (coincide con gasto May 2026)
+    INSERT INTO maintenance_logs (vehicle_id, user_id, system, date, km_at_maintenance, workshop, description, cost, next_service_km, next_service_date, created_at)
+    VALUES (@v2b, @u2, 'MOTOR', '2026-05-22', 72000, 'Taller Oficial Ford Córdoba',
+            'Cambio de aceite sintético 5W40 y filtro de aceite', 12500.00, 77000, NULL, GETDATE());
+
+END
+GO

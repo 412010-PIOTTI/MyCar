@@ -65,94 +65,23 @@
   <!-- ── Main content ───────────────────────────────────────────────────── -->
   <ng-container *ngIf="selectedVehicle && !loading && !loadError">
 
-    <!-- ── Top row: salud + tarjetas laterales ────────────────────────── -->
-    <div class="grid grid-cols-12 gap-4 mb-4">
-
-      <!-- Salud del Sistema -->
-      <div class="col-span-12 lg:col-span-8 card">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-base font-semibold text-text-primary">🛡&nbsp; Salud del Sistema</h3>
-          <span
-            *ngIf="healthData"
-            class="px-3 py-1 rounded-full text-xs font-semibold"
-            [ngClass]="overallStatusClass"
-          >
-            {{ overallStatusLabel }}
-          </span>
-        </div>
-
-        <!-- Health bars -->
-        <ng-container *ngIf="healthData && healthData.systems.length > 0; else noHealth">
-          <div *ngFor="let sys of healthData.systems" class="mb-4 last:mb-0">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-sm text-text-primary">{{ sys.name }}</span>
-              <span class="text-xs font-semibold" [ngClass]="getHealthPctClass(sys.healthPct)">
-                {{ sys.healthPct != null ? (sys.healthPct + '%') : '—' }}
-              </span>
-            </div>
-            <div class="w-full bg-surface h-2 rounded-full overflow-hidden">
-              <div
-                class="h-2 rounded-full transition-all duration-500"
-                [ngClass]="getHealthBarColor(sys.healthPct)"
-                [style.width.%]="sys.healthPct ?? 0"
-              ></div>
-            </div>
-            <p *ngIf="sys.recommendation" class="text-[11px] text-warning-dark mt-0.5">
-              {{ sys.recommendation }}
-            </p>
-          </div>
-        </ng-container>
-
-        <!-- Next service card -->
-        <div *ngIf="healthData" class="mt-4 border border-surface-border rounded-lg p-4 bg-surface flex items-center gap-6">
-          <div>
-            <p class="text-[10px] font-semibold text-text-secondary uppercase tracking-wide mb-1">Próximo service estimado</p>
-            <p class="text-3xl font-bold text-text-primary leading-none">
-              {{ healthData.systems.length > 0 ? '4.250' : '—' }}
-            </p>
-            <p class="text-xs text-text-muted mt-0.5">KM restantes</p>
-          </div>
-        </div>
-
-        <ng-template #noHealth>
-          <div class="flex flex-col items-center py-8 text-center gap-2">
-            <span class="text-3xl">📊</span>
-            <p class="text-sm text-text-secondary">Registrá servicios para ver el estado de salud</p>
-          </div>
-        </ng-template>
+    <!-- ── Stats row ──────────────────────────────────────────────────── -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+      <div class="card text-center">
+        <p class="text-2xl font-bold text-text-primary">{{ allRecords.length }}</p>
+        <p class="text-xs text-text-muted mt-0.5">Services registrados</p>
       </div>
-
-      <!-- Right column: gasto anual + alertas -->
-      <div class="col-span-12 lg:col-span-4 flex flex-col gap-4">
-
-        <!-- Gasto Total Anual -->
-        <div class="rounded-md bg-primary text-text-inverse p-5 flex flex-col gap-1 shadow-panel">
-          <p class="text-sm text-white/80">Gasto Total Anual</p>
-          <p class="text-3xl font-bold">
-            {{ annualCost ? formatCost(annualCost.total) : '$—' }}
-          </p>
-          <span
-            *ngIf="annualCost?.changePercent != null"
-            class="text-xs font-medium text-emerald-300 mt-1"
-          >
-            {{ formatChangePercent(annualCost!.changePercent) }}
-          </span>
-          <p *ngIf="!annualCost" class="text-sm text-white/60 mt-1">Sin datos aún</p>
-        </div>
-
-        <!-- Alertas Pendientes -->
-        <div class="card flex-1">
-          <h4 class="text-sm font-semibold text-text-primary mb-3">⚠&nbsp; Alertas Pendientes</h4>
-          <ng-container *ngIf="urgentAlerts.length > 0; else noAlerts">
-            <div *ngFor="let alert of urgentAlerts" class="mb-3 last:mb-0">
-              <p [ngClass]="getUrgencyTextClass(alert.urgencyLevel)" class="text-sm">{{ alert.title }}</p>
-              <p class="text-xs text-text-muted">{{ alertSubtitle(alert) }}</p>
-            </div>
-          </ng-container>
-          <ng-template #noAlerts>
-            <p class="text-sm text-text-secondary">Sin alertas pendientes ✅</p>
-          </ng-template>
-        </div>
+      <div class="card text-center">
+        <p class="text-2xl font-bold text-text-primary">
+          {{ formatCost(totalCost) }}
+        </p>
+        <p class="text-xs text-text-muted mt-0.5">Gasto total en mantenimiento</p>
+      </div>
+      <div class="card text-center col-span-2 sm:col-span-1">
+        <p class="text-2xl font-bold text-text-primary">
+          {{ lastKm ? formatKm(lastKm) : '—' }}
+        </p>
+        <p class="text-xs text-text-muted mt-0.5">Último service registrado</p>
       </div>
     </div>
 
