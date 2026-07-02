@@ -42,7 +42,7 @@ class TransferControllerTest {
 
     static final String OWNER_EMAIL = "seller@example.com";
     static final Long VEHICLE_ID = 1L;
-    static final String TOKEN = "8f14e45f-ceea-4e94-b7f0-3d3a7b2f6d1a";
+    static final String TOKEN = "sample-transfer-token";
 
     static final TransferGenerateResponse GENERATE_STUB = new TransferGenerateResponse(
             TOKEN, LocalDateTime.now().plusHours(48),
