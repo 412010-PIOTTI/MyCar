@@ -75,8 +75,10 @@ export class AuthService {
   clearLocalSession(): void {
     if (this.sessionClearing) return;
     this.sessionClearing = true;
+    const currentUrl = this.router.url;
     localStorage.removeItem(this.TOKEN_KEY);
-    this.router.navigate(['/auth/login']).then(() => {
+    const extras = currentUrl.startsWith('/auth') ? undefined : { queryParams: { returnUrl: currentUrl } };
+    this.router.navigate(['/auth/login'], extras).then(() => {
       this.sessionClearing = false;
     });
   }

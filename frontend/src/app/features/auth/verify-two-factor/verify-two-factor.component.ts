@@ -36,7 +36,8 @@ export class VerifyTwoFactorComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     if (!this.authService.pending2FAEmail) {
-      this.router.navigate(['/auth/login']);
+      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+      this.router.navigate(['/auth/login'], returnUrl ? { queryParams: { returnUrl } } : undefined);
       return;
     }
     this.realEmail = this.authService.pending2FAEmail;
@@ -99,10 +100,14 @@ export class VerifyTwoFactorComponent implements OnInit, OnDestroy {
   }
 
   cancel(): void {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
     this.authService
       .cancel2FA(this.realEmail)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ complete: () => this.router.navigate(['/auth/login']) });
+      .subscribe({
+        complete: () =>
+          this.router.navigate(['/auth/login'], returnUrl ? { queryParams: { returnUrl } } : undefined),
+      });
   }
 
   private startCooldown(seconds: number): void {

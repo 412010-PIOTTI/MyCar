@@ -35,6 +35,12 @@ export class LoginComponent {
     'Chat técnico con IA integrada',
   ];
 
+  /** Forwards a pending returnUrl to the register page, so switching flows doesn't lose it. */
+  get returnUrlParam(): Record<string, string> {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    return returnUrl ? { returnUrl } : {};
+  }
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
