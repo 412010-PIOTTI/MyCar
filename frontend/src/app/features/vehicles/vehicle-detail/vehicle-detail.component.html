@@ -53,7 +53,7 @@
   @if (!loading && !notFound && vehicle) {
 
     <!-- Page header with actions -->
-    <div class="flex items-start justify-between gap-4 mb-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
       <div>
         <h1 class="text-2xl font-bold text-[#0b1c30]">{{ vehicle.brand }} {{ vehicle.model }}</h1>
         <p class="text-sm text-text-secondary mt-1">Registrado el {{ vehicle.createdAt | date:'dd/MM/yyyy' }}</p>

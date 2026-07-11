@@ -2,7 +2,7 @@
 
     <h1 class="text-2xl font-bold text-text-primary mb-6">Configuración</h1>
 
-    <div class="grid gap-6" style="grid-template-columns: 1fr 20rem">
+    <div class="grid grid-cols-1 gap-6 lg:[grid-template-columns:1fr_20rem]">
 
       <!-- ── Left column ─────────────────────────────────────────── -->
       <div class="space-y-6">
@@ -10,7 +10,7 @@
         <!-- Editar Perfil -->
         <app-section-card title="Editar Perfil" subtitle="Información Personal">
           <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
-            <div class="grid grid-cols-2 gap-4 mb-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
               <div>
                 <label class="block text-xs text-text-secondary mb-1.5">Nombre Completo</label>
                 <input
@@ -179,7 +179,7 @@
 
         <!-- Tipo de Cuenta -->
         <app-section-card title="Tipo de Cuenta">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
             <div class="border-2 rounded-md p-4 transition-colors"
               [ngClass]="userRole === 'USER'
