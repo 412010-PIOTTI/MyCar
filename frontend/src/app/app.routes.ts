@@ -27,55 +27,82 @@ export const routes: Routes = [
     children: [
       {
         path: 'dashboard',
-        data: { title: 'Dashboard' },
+        data: {
+          title: 'Dashboard',
+          help: 'Acá tenés un resumen general: tus vehículos, próximos vencimientos y la actividad más reciente.',
+        },
         loadChildren: () =>
           import('./features/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
       },
       {
         path: 'vehicles',
-        data: { title: 'Mis vehículos' },
+        data: {
+          title: 'Mis vehículos',
+          help: 'Administrá tus vehículos: agregá uno nuevo, editá sus datos o entrá al detalle de cada uno.',
+        },
         loadChildren: () =>
           import('./features/vehicles/vehicles.routes').then((m) => m.VEHICLES_ROUTES),
       },
       {
         path: 'expenses',
-        data: { title: 'Gastos' },
+        data: {
+          title: 'Gastos',
+          help: 'Registrá y consultá los gastos de tus vehículos, agrupados por categoría.',
+        },
         loadChildren: () =>
           import('./features/expenses/expenses.routes').then((m) => m.EXPENSES_ROUTES),
       },
       {
         path: 'settings',
-        data: { title: 'Configuración' },
+        data: {
+          title: 'Configuración',
+          help: 'Actualizá los datos de tu cuenta, cambiá tu contraseña o configurá otras preferencias.',
+        },
         loadChildren: () =>
           import('./features/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
       },
       {
         path: 'maintenance',
-        data: { title: 'Mantenimiento' },
+        data: {
+          title: 'Mantenimiento',
+          help: 'Llevá el historial de mantenimientos: qué se hizo, en qué sistema y con qué kilometraje.',
+        },
         loadComponent: () =>
           import('./features/maintenance/maintenance.component').then((m) => m.MaintenanceComponent),
       },
       {
         path: 'documents',
-        data: { title: 'Documentos' },
+        data: {
+          title: 'Documentos',
+          help: 'Guardá y organizá los documentos de tus vehículos, como el seguro, la VTV o la cédula.',
+        },
         loadComponent: () =>
           import('./features/documents/documents.component').then((m) => m.DocumentsComponent),
       },
       {
         path: 'alerts',
-        data: { title: 'Alertas' },
+        data: {
+          title: 'Alertas',
+          help: 'Revisá las alertas activas de tus vehículos: vencimientos próximos o urgentes.',
+        },
         loadComponent: () =>
           import('./features/alerts/alerts.component').then((m) => m.AlertsComponent),
       },
       {
         path: 'transfers',
-        data: { title: 'Transferencias' },
+        data: {
+          title: 'Transferencias',
+          help: 'Transferí la propiedad de un vehículo a otra persona generando un token de transferencia.',
+        },
         loadComponent: () =>
           import('./features/transfers/transfers.component').then((m) => m.TransfersComponent),
       },
       {
         path: 'ai-chat',
-        data: { title: 'AI Chat' },
+        data: {
+          title: 'AI Chat',
+          help: 'Charlá con el asistente para resolver dudas sobre tus vehículos y su mantenimiento.',
+        },
         loadComponent: () =>
           import('./features/ai-chat/ai-chat.component').then((m) => m.AiChatComponent),
       },

@@ -43,8 +43,8 @@ interface NotifItem {
       <div class="flex items-center gap-1 flex-shrink-0">
 
         <!-- ── Backdrop ────────────────────────────────────────────────── -->
-        @if (showDropdown || showUserMenu) {
-          <div class="fixed inset-0 z-40" (click)="closeDropdown(); closeUserMenu()"></div>
+        @if (showDropdown || showUserMenu || showHelp) {
+          <div class="fixed inset-0 z-40" (click)="closeDropdown(); closeUserMenu(); closeHelp()"></div>
         }
 
         <!-- ── Bell + dropdown ────────────────────────────────────────── -->
@@ -137,14 +137,31 @@ interface NotifItem {
         </div>
 
         <!-- ── Help ───────────────────────────────────────────────────── -->
-        <button
-          title="Ayuda"
-          class="hidden sm:block p-2 text-text-secondary hover:text-text-primary rounded-md hover:bg-gray-50 transition-colors">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </button>
+        <div class="relative z-50 hidden sm:block">
+          <button
+            (click)="toggleHelp($event)"
+            title="Ayuda"
+            class="p-2 rounded-md transition-colors"
+            [class]="showHelp
+              ? 'text-primary bg-blue-50'
+              : 'text-text-secondary hover:text-text-primary hover:bg-gray-50'">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+
+          <!-- Popover -->
+          @if (showHelp) {
+            <div class="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] bg-white border border-surface-border
+                        rounded-lg shadow-panel overflow-hidden p-4">
+              <p class="text-sm font-semibold text-text-primary">{{ pageTitle }}</p>
+              <p class="text-sm text-text-secondary mt-1.5 leading-relaxed">
+                {{ helpText || 'No hay información adicional para esta página.' }}
+              </p>
+            </div>
+          }
+        </div>
 
         <div class="hidden sm:block w-px h-6 bg-surface-border mx-2"></div>
 
@@ -209,6 +226,7 @@ interface NotifItem {
 })
 export class TopbarComponent implements OnInit {
   @Input() pageTitle = '';
+  @Input() helpText = '';
   @Output() menuToggle = new EventEmitter<void>();
 
   userName = '';
@@ -220,6 +238,7 @@ export class TopbarComponent implements OnInit {
 
   showUserMenu = false;
   showLogoutModal = false;
+  showHelp = false;
 
   private destroyRef     = inject(DestroyRef);
   private userService    = inject(UserService);
@@ -281,6 +300,15 @@ export class TopbarComponent implements OnInit {
 
   closeUserMenu(): void {
     this.showUserMenu = false;
+  }
+
+  toggleHelp(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showHelp = !this.showHelp;
+  }
+
+  closeHelp(): void {
+    this.showHelp = false;
   }
 
   openLogoutModal(): void {
