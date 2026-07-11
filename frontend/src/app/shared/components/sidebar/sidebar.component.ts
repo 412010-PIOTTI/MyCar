@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { LogoutConfirmModalComponent } from '../logout-confirm-modal/logout-confirm-modal.component';
@@ -10,6 +10,9 @@ import { LogoutConfirmModalComponent } from '../logout-confirm-modal/logout-conf
   templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent {
+  @Input() mobileOpen = false;
+  @Output() mobileClose = new EventEmitter<void>();
+
   collapsed = true;
   showLogoutModal = false;
 
@@ -21,6 +24,15 @@ export class SidebarComponent {
 
   toggleCollapsed(): void {
     this.collapsed = !this.collapsed;
+  }
+
+  /** Full nav labels show when explicitly expanded, or when open as a mobile drawer. */
+  get showLabels(): boolean {
+    return !this.collapsed || this.mobileOpen;
+  }
+
+  onNavClick(): void {
+    if (this.mobileOpen) this.mobileClose.emit();
   }
 
   openLogoutModal(): void {

@@ -11,9 +11,9 @@ import { TopbarComponent } from '../topbar/topbar.component';
   imports: [SidebarComponent, TopbarComponent, RouterOutlet],
   template: `
     <div class="flex h-screen bg-surface overflow-hidden">
-      <app-sidebar></app-sidebar>
+      <app-sidebar [mobileOpen]="sidebarMobileOpen" (mobileClose)="sidebarMobileOpen = false"></app-sidebar>
       <div class="flex flex-col flex-1 min-w-0">
-        <app-topbar [pageTitle]="pageTitle"></app-topbar>
+        <app-topbar [pageTitle]="pageTitle" (menuToggle)="sidebarMobileOpen = !sidebarMobileOpen"></app-topbar>
         <main class="flex-1 overflow-y-auto">
           <router-outlet></router-outlet>
         </main>
@@ -23,6 +23,7 @@ import { TopbarComponent } from '../topbar/topbar.component';
 })
 export class AppShellComponent implements OnInit {
   pageTitle = '';
+  sidebarMobileOpen = false;
 
   private destroyRef = inject(DestroyRef);
 
@@ -33,7 +34,10 @@ export class AppShellComponent implements OnInit {
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe(() => this.updateTitle());
+    ).subscribe(() => {
+      this.updateTitle();
+      this.sidebarMobileOpen = false;
+    });
   }
 
   private updateTitle(): void {
