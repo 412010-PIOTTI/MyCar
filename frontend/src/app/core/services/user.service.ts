@@ -29,4 +29,9 @@ export class UserService {
   deleteAccount(password: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/me`, { body: { password } });
   }
+
+  /** Permanently erases the user's personal data (vehicles, expenses, documents, etc.), distinct from deleteAccount's soft deactivation. */
+  deleteMyData(password: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/me/data`, { body: { password } });
+  }
 }

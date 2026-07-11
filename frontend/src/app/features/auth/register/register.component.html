@@ -189,9 +189,8 @@
             />
             <label for="terms" class="text-xs text-slate-500 leading-relaxed cursor-pointer">
               Acepto los
-              <span class="text-auth-accent font-semibold">Términos de Servicio</span>
-              y la
-              <span class="text-auth-accent font-semibold">Política de Privacidad</span>
+              <a routerLink="/legal/terminos" target="_blank" class="text-auth-accent font-semibold hover:underline">Términos y Condiciones</a>,
+              incluyendo la Política de Privacidad
             </label>
           </div>
           @if (form.controls.terms.invalid && form.controls.terms.touched) {
