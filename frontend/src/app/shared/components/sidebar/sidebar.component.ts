@@ -10,7 +10,7 @@ import { LogoutConfirmModalComponent } from '../logout-confirm-modal/logout-conf
   templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent {
-  collapsed = false;
+  collapsed = true;
   showLogoutModal = false;
 
   constructor(private router: Router) {}
