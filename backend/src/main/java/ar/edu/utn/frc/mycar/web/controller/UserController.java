@@ -161,4 +161,42 @@ public class UserController {
         userService.deleteAccount(authentication.getName(), request.password(), authHeader.substring(7));
         return ResponseEntity.ok(Map.of("message", "Cuenta desactivada correctamente"));
     }
+
+    @Operation(
+            summary = "Permanently delete my personal data",
+            description = """
+                    Requires the current password for confirmation. Unlike DELETE /me (soft \
+                    deactivation), this permanently deletes the user's vehicles and everything \
+                    under them (expenses, maintenance logs, documents and their files, alerts). \
+                    Vehicles that appear in the permanent transfer audit trail keep their bare \
+                    record (plate/brand/model) since that history cannot be altered, but all \
+                    their personal-data children are purged all the same. The account's name, \
+                    email and password are anonymized, it is deactivated, and the current JWT \
+                    is revoked."""
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Personal data deleted and token revoked."),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Password is incorrect.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Missing or invalid JWT.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+            )
+    })
+    @DeleteMapping("/me/data")
+    public ResponseEntity<Map<String, String>> deleteMyData(
+            Authentication authentication,
+            @RequestBody @Valid DeleteAccountRequest request,
+            HttpServletRequest httpRequest) {
+        String authHeader = httpRequest.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        userService.deleteMyData(authentication.getName(), request.password(), authHeader.substring(7));
+        return ResponseEntity.ok(Map.of("message", "Tus datos personales fueron eliminados correctamente"));
+    }
 }

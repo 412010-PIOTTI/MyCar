@@ -12,7 +12,9 @@ import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /** Stores and retrieves document PDF files on the local filesystem. */
 @Service
@@ -60,6 +62,27 @@ public class FileStorageService {
             return new UrlResource(file.toUri());
         } catch (MalformedURLException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    /** Removes every file stored for a vehicle (best-effort), used when purging a user's personal data. */
+    public void deleteVehicleFolder(Long vehicleId) {
+        Path dir = rootDir.resolve(String.valueOf(vehicleId)).normalize();
+        if (!dir.startsWith(rootDir) || !Files.isDirectory(dir)) {
+            return;
+        }
+        try (Stream<Path> paths = Files.walk(dir)) {
+            paths.sorted(Comparator.reverseOrder()).forEach(this::deletePathQuietly);
+        } catch (IOException ignored) {
+            // best-effort cleanup, not worth failing the request over
+        }
+    }
+
+    private void deletePathQuietly(Path path) {
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException ignored) {
+            // best-effort cleanup, not worth failing the request over
         }
     }
 

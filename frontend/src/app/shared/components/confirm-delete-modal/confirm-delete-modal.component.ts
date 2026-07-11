@@ -22,14 +22,13 @@ import { PasswordInputComponent } from '../password-input/password-input.compone
               </svg>
             </div>
             <div>
-              <h2 class="text-base font-bold text-text-primary">Solicitar Baja de Cuenta</h2>
-              <p class="text-xs text-text-secondary">Esta acción desactivará tu cuenta.</p>
+              <h2 class="text-base font-bold text-text-primary">{{ title }}</h2>
+              <p class="text-xs text-text-secondary">{{ subtitle }}</p>
             </div>
           </div>
 
           <p class="text-sm text-text-secondary mb-5">
-            Tu cuenta será desactivada y no podrás acceder nuevamente. Todos tus datos quedan
-            guardados en nuestra base de datos. Para confirmar, ingresá tu contraseña actual.
+            {{ message }}
           </p>
 
           <!-- Password field -->
@@ -82,7 +81,7 @@ import { PasswordInputComponent } from '../password-input/password-input.compone
                 </svg>
                 Procesando...
               } @else {
-                Confirmar Baja
+                {{ confirmLabel }}
               }
             </button>
           </div>
@@ -96,6 +95,10 @@ export class ConfirmDeleteModalComponent implements OnChanges {
   @Input() visible = false;
   @Input() loading = false;
   @Input() errorMessage = '';
+  @Input() title = 'Solicitar Baja de Cuenta';
+  @Input() subtitle = 'Esta acción desactivará tu cuenta.';
+  @Input() message = 'Tu cuenta será desactivada y no podrás acceder nuevamente. Todos tus datos quedan guardados en nuestra base de datos. Para confirmar, ingresá tu contraseña actual.';
+  @Input() confirmLabel = 'Confirmar Baja';
 
   @Output() cancelled = new EventEmitter<void>();
   @Output() confirmed = new EventEmitter<string>();

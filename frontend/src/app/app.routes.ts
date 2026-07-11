@@ -21,6 +21,11 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'legal/terminos',
+    loadComponent: () =>
+      import('./features/legal/terms/terms.component').then((m) => m.TermsComponent),
+  },
+  {
     path: '',
     component: AppShellComponent,
     canActivate: [authGuard],
@@ -51,6 +56,15 @@ export const routes: Routes = [
         },
         loadChildren: () =>
           import('./features/expenses/expenses.routes').then((m) => m.EXPENSES_ROUTES),
+      },
+      {
+        path: 'faq',
+        data: {
+          title: 'Preguntas Frecuentes',
+          help: 'Respuestas a las dudas más comunes sobre cómo usar MyCar.',
+        },
+        loadComponent: () =>
+          import('./features/faq/faq.component').then((m) => m.FaqComponent),
       },
       {
         path: 'settings',
