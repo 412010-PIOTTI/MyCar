@@ -80,17 +80,17 @@
         <div class="bg-white border border-surface-border rounded-md shadow-card overflow-hidden
                     hover:shadow-panel transition-shadow">
 
-          <!-- Photo placeholder -->
-          <div class="bg-[#d9dee5] h-40 relative">
+          <!-- Photo placeholder, tinted with the vehicle's color -->
+          <div class="h-40 relative" [style.background-color]="colorTheme(vehicle).bg">
             <div class="absolute inset-0 flex items-center justify-center">
               <div class="text-center">
-                <svg class="w-10 h-10 text-[#b0bec5] mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-10 h-10 mx-auto mb-1" [style.color]="colorTheme(vehicle).icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                     d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                     d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 2h2m8-2h2l2-2V9a1 1 0 00-1-1h-3.172a2 2 0 01-1.414-.586l-1.828-1.828A2 2 0 009.172 5H4" />
                 </svg>
-                <p class="text-sm font-semibold text-[#546e7a]">{{ vehicle.brand }} {{ vehicle.model }}</p>
+                <p class="text-sm font-semibold" [style.color]="colorTheme(vehicle).text">{{ vehicle.brand }} {{ vehicle.model }}</p>
               </div>
             </div>
             <!-- KM badge -->

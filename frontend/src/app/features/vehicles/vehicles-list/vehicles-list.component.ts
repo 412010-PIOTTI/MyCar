@@ -8,6 +8,7 @@ import { Vehicle } from '../../../core/models/vehicle.model';
 import { VehicleRegisterModalComponent } from '../vehicle-register-modal/vehicle-register-modal.component';
 import { VehicleEditModalComponent } from '../vehicle-edit-modal/vehicle-edit-modal.component';
 import { ConfirmActionModalComponent } from '../../../shared/components/confirm-action-modal/confirm-action-modal.component';
+import { getVehicleColorTheme } from '../../../shared/utils/vehicle-color.util';
 
 @Component({
   selector: 'app-vehicles-list',
@@ -49,6 +50,10 @@ export class VehiclesListComponent implements OnInit {
           this.loadError = true;
         },
       });
+  }
+
+  colorTheme(vehicle: Vehicle) {
+    return getVehicleColorTheme(vehicle.color);
   }
 
   onVehicleCreated(vehicle: Vehicle): void {

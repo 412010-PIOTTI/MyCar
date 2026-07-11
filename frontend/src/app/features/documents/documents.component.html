@@ -9,24 +9,26 @@
     <div class="flex flex-wrap items-center gap-3 flex-shrink-0">
       <!-- Vehicle selector -->
       @if (!vehiclesLoading) {
-        @if (vehicles.length > 1) {
-          <select (change)="onVehicleChange($event)" class="form-input text-sm pr-8 max-w-full">
-            <option value="" [selected]="!selectedVehicle">Todos los vehículos</option>
-            @for (v of vehicles; track v.id) {
-              <option [value]="v.id" [selected]="selectedVehicle?.id === v.id">
-                {{ v.brand }} {{ v.model }} · {{ v.plate }}
-              </option>
-            }
-          </select>
-        }
-        @if (vehicles.length === 1 && selectedVehicle) {
-          <span class="text-sm text-text-secondary font-medium">
-            {{ selectedVehicle.brand }} {{ selectedVehicle.model }} · {{ selectedVehicle.plate }}
-          </span>
-        }
-        @if (vehicles.length === 0) {
-          <span class="text-sm text-text-muted">Sin vehículos registrados</span>
-        }
+        <div class="max-w-full">
+          @if (vehicles.length > 1) {
+            <select (change)="onVehicleChange($event)" class="form-input text-sm pr-8 max-w-full">
+              <option value="" [selected]="!selectedVehicle">Todos los vehículos</option>
+              @for (v of vehicles; track v.id) {
+                <option [value]="v.id" [selected]="selectedVehicle?.id === v.id">
+                  {{ v.brand }} {{ v.model }} · {{ v.plate }}
+                </option>
+              }
+            </select>
+          }
+          @if (vehicles.length === 1 && selectedVehicle) {
+            <span class="text-sm text-text-secondary font-medium">
+              {{ selectedVehicle.brand }} {{ selectedVehicle.model }} · {{ selectedVehicle.plate }}
+            </span>
+          }
+          @if (vehicles.length === 0) {
+            <span class="text-sm text-text-muted">Sin vehículos registrados</span>
+          }
+        </div>
       }
 
       <div class="relative group">
