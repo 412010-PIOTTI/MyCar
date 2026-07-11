@@ -14,6 +14,13 @@ export const routes: Routes = [
       import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },
   {
+    path: 'transfer/confirm',
+    loadComponent: () =>
+      import('./features/transfers/transfer-confirm/transfer-confirm.component').then(
+        (m) => m.TransferConfirmComponent,
+      ),
+  },
+  {
     path: '',
     component: AppShellComponent,
     canActivate: [authGuard],

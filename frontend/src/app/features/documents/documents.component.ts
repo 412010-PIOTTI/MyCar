@@ -33,6 +33,7 @@ export class DocumentsComponent implements OnInit {
 
   @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
   attachTargetDocId: number | null = null;
+  attachTargetVehicleId: number | null = null;
   fileActionLoadingId: number | null = null;
 
   // ── Vehicle selector ──────────────────────────────────────────────────────
@@ -53,6 +54,7 @@ export class DocumentsComponent implements OnInit {
   // ── Delete confirm ────────────────────────────────────────────────────────
   showDeleteConfirm = false;
   deleteTargetId: number | null = null;
+  deleteTargetVehicleId: number | null = null;
   deleteLoading     = false;
   deleteError       = '';
 
@@ -70,6 +72,11 @@ export class DocumentsComponent implements OnInit {
     PATENTE:      { label: 'Patente',               icon: '📝' },
     OTRO:         { label: 'Otro documento',        icon: '📌' },
   };
+
+  /** True when showing aggregate data for all vehicles (no specific one selected). */
+  get allVehiclesMode(): boolean {
+    return this.selectedVehicle === null && this.vehicles.length > 0;
+  }
 
   ngOnInit(): void {
     this.vehicleService
@@ -90,27 +97,77 @@ export class DocumentsComponent implements OnInit {
     this.selectedVehicle = value
       ? (this.vehicles.find(v => v.id === Number(value)) ?? null)
       : null;
-    if (this.selectedVehicle) this.loadAll();
+    this.loadAll();
   }
 
   loadAll(): void {
-    if (!this.selectedVehicle) return;
     this.loading   = true;
     this.loadError = false;
-    const id = this.selectedVehicle.id;
 
-    forkJoin({
-      documents: this.documentService.getDocuments(id),
-      summary:   this.documentService.getSummary(id),
-    })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.loading = false)))
-      .subscribe({
-        next: ({ documents, summary }) => {
-          this.documents = documents;
-          this.summary   = summary;
-        },
-        error: () => (this.loadError = true),
-      });
+    if (this.selectedVehicle) {
+      const id = this.selectedVehicle.id;
+      forkJoin({
+        documents: this.documentService.getDocuments(id),
+        summary:   this.documentService.getSummary(id),
+      })
+        .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.loading = false)))
+        .subscribe({
+          next: ({ documents, summary }) => {
+            this.documents = documents;
+            this.summary   = summary;
+          },
+          error: () => (this.loadError = true),
+        });
+    } else {
+      forkJoin(this.vehicles.map((v) => this.documentService.getDocuments(v.id)))
+        .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.loading = false)))
+        .subscribe({
+          next: (results) => {
+            this.documents = results.flat();
+            this.summary   = this.buildSummary(this.documents);
+          },
+          error: () => (this.loadError = true),
+        });
+    }
+  }
+
+  getVehicleLabel(vehicleId: number): string {
+    const v = this.vehicles.find((v) => v.id === vehicleId);
+    return v ? `${v.brand} ${v.model} · ${v.plate}` : '';
+  }
+
+  /** Recomputes the compliance summary client-side from a flattened multi-vehicle document list. */
+  private buildSummary(docs: DocumentResponse[]): DocumentSummaryResponse {
+    let vigente = 0, porVencer = 0, vencido = 0, sinFecha = 0;
+    let nextExpiring: DocumentSummaryResponse['nextExpiring'] = null;
+    let nextDaysLeft = Infinity;
+
+    for (const doc of docs) {
+      switch (doc.status) {
+        case 'VIGENTE':    vigente++; break;
+        case 'POR_VENCER': porVencer++; break;
+        case 'VENCIDO':    vencido++; break;
+        case 'SIN_FECHA':  sinFecha++; break;
+      }
+      if ((doc.status === 'VIGENTE' || doc.status === 'POR_VENCER') && doc.expiryDate) {
+        const daysLeft = this.daysUntil(doc.expiryDate);
+        if (daysLeft < nextDaysLeft) {
+          nextDaysLeft = daysLeft;
+          nextExpiring = { type: doc.type, label: this.getTypeLabel(doc.type), expiryDate: doc.expiryDate, daysLeft };
+        }
+      }
+    }
+
+    const total = docs.length;
+    const compliancePercentage = total === 0 ? 100 : Math.round((vigente * 100) / total);
+    return { total, vigente, porVencer, vencido, sinFecha, compliancePercentage, nextExpiring };
+  }
+
+  private daysUntil(dateStr: string): number {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(dateStr + 'T00:00:00');
+    return Math.round((target.getTime() - today.getTime()) / 86_400_000);
   }
 
   // ── Register modal ────────────────────────────────────────────────────────
@@ -129,24 +186,26 @@ export class DocumentsComponent implements OnInit {
 
   // ── Delete ────────────────────────────────────────────────────────────────
 
-  confirmDelete(docId: number): void {
-    this.deleteTargetId = docId;
+  confirmDelete(docId: number, vehicleId: number): void {
+    this.deleteTargetId        = docId;
+    this.deleteTargetVehicleId = vehicleId;
     this.deleteError    = '';
     this.showDeleteConfirm = true;
   }
 
   onDeleteConfirmed(): void {
-    if (!this.selectedVehicle || !this.deleteTargetId) return;
+    if (!this.deleteTargetVehicleId || !this.deleteTargetId) return;
     this.deleteLoading = true;
     this.deleteError   = '';
 
     this.documentService
-      .deleteDocument(this.selectedVehicle.id, this.deleteTargetId)
+      .deleteDocument(this.deleteTargetVehicleId, this.deleteTargetId)
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.deleteLoading = false)))
       .subscribe({
         next: () => {
           this.showDeleteConfirm = false;
           this.deleteTargetId    = null;
+          this.deleteTargetVehicleId = null;
           this.loadAll();
         },
         error: () => (this.deleteError = 'No se pudo eliminar el documento. Intentá de nuevo.'),
@@ -156,13 +215,15 @@ export class DocumentsComponent implements OnInit {
   onDeleteCancelled(): void {
     this.showDeleteConfirm = false;
     this.deleteTargetId    = null;
+    this.deleteTargetVehicleId = null;
     this.deleteError       = '';
   }
 
   // ── PDF attach / view ────────────────────────────────────────────────────
 
-  triggerAttach(docId: number): void {
-    this.attachTargetDocId = docId;
+  triggerAttach(docId: number, vehicleId: number): void {
+    this.attachTargetDocId        = docId;
+    this.attachTargetVehicleId    = vehicleId;
     this.fileInputRef.nativeElement.value = '';
     this.fileInputRef.nativeElement.click();
   }
@@ -171,11 +232,12 @@ export class DocumentsComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     const docId = this.attachTargetDocId;
-    if (!file || !docId || !this.selectedVehicle) return;
+    const vehicleId = this.attachTargetVehicleId;
+    if (!file || !docId || !vehicleId) return;
 
     this.fileActionLoadingId = docId;
     this.documentService
-      .uploadFile(this.selectedVehicle.id, docId, file)
+      .uploadFile(vehicleId, docId, file)
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.fileActionLoadingId = null)))
       .subscribe({
         next: () => this.loadAll(),
@@ -183,11 +245,10 @@ export class DocumentsComponent implements OnInit {
       });
   }
 
-  viewFile(docId: number): void {
-    if (!this.selectedVehicle) return;
+  viewFile(docId: number, vehicleId: number): void {
     this.fileActionLoadingId = docId;
     this.documentService
-      .downloadFile(this.selectedVehicle.id, docId)
+      .downloadFile(vehicleId, docId)
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.fileActionLoadingId = null)))
       .subscribe({
         next: (blob) => {

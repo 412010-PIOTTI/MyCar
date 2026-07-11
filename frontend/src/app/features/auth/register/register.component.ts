@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
@@ -22,6 +22,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 export class RegisterComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
 
@@ -54,6 +55,12 @@ export class RegisterComponent {
     'Exportación de datos en cualquier momento',
   ];
 
+  /** Forwards a pending returnUrl to the login page, so switching flows doesn't lose it. */
+  get returnUrlParam(): Record<string, string> {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    return returnUrl ? { returnUrl } : {};
+  }
+
   selectRole(role: string): void {
     this.form.patchValue({ role });
   }
@@ -76,7 +83,10 @@ export class RegisterComponent {
         finalize(() => (this.loading = false)),
       )
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
+        next: () => {
+          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+          this.router.navigateByUrl(returnUrl || '/dashboard');
+        },
         error: (err) => {
           this.errorMessage =
             err.status === 409

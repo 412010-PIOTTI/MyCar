@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known false positives — fake test fixtures, not real credentials"
+regexes = [
+  '''8f14e45f-ceea-4e94-b7f0-3d3a7b2f6d1a''', # placeholder UUID used in transfer-token test fixtures/API docs example
+]

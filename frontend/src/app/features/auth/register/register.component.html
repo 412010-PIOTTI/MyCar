@@ -51,7 +51,7 @@
     <!-- Nav superior -->
     <div class="flex justify-end items-center gap-1 px-10 py-8">
       <span class="text-slate-500 text-sm">¿Ya tenés cuenta?</span>
-      <a routerLink="/auth/login" class="text-auth-accent text-sm font-semibold hover:underline">Ingresá →</a>
+      <a routerLink="/auth/login" [queryParams]="returnUrlParam" class="text-auth-accent text-sm font-semibold hover:underline">Ingresá →</a>
     </div>
 
     <!-- Formulario centrado -->
@@ -214,7 +214,7 @@
         <!-- Link login -->
         <p class="mt-6 text-center text-sm text-slate-500">
           ¿Ya tenés cuenta?
-          <a routerLink="/auth/login" class="text-auth-accent font-semibold ml-1 hover:underline">Ingresá →</a>
+          <a routerLink="/auth/login" [queryParams]="returnUrlParam" class="text-auth-accent font-semibold ml-1 hover:underline">Ingresá →</a>
         </p>
 
       </div>

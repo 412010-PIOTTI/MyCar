@@ -119,4 +119,22 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "El archivo supera el tamaño máximo permitido (10MB).");
     }
+
+    /** Returns 404 when a transfer token does not exist. */
+    @ExceptionHandler(TransferTokenNotFoundException.class)
+    public ProblemDetail handleTransferTokenNotFound(TransferTokenNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    /** Returns 410 when a transfer token has expired or was already used. */
+    @ExceptionHandler(TransferTokenInvalidException.class)
+    public ProblemDetail handleTransferTokenInvalid(TransferTokenInvalidException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.GONE, ex.getMessage());
+    }
+
+    /** Returns 400 when the confirming user is already the current owner of the vehicle. */
+    @ExceptionHandler(CannotTransferToSelfException.class)
+    public ProblemDetail handleCannotTransferToSelf(CannotTransferToSelfException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 }

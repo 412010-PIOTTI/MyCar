@@ -43,7 +43,7 @@
     <!-- Nav superior -->
     <div class="flex justify-end items-center gap-1 px-10 py-8">
       <span class="text-slate-500 text-sm">¿No tenés cuenta?</span>
-      <a routerLink="/auth/register" class="text-auth-accent text-sm font-semibold hover:underline">Registrate</a>
+      <a routerLink="/auth/register" [queryParams]="returnUrlParam" class="text-auth-accent text-sm font-semibold hover:underline">Registrate</a>
     </div>
 
     <!-- Formulario centrado -->
@@ -111,7 +111,7 @@
         <!-- Link registro -->
         <p class="mt-8 text-center text-sm text-slate-500">
           ¿No tenés cuenta?
-          <a routerLink="/auth/register" class="text-auth-accent font-semibold ml-1 hover:underline">
+          <a routerLink="/auth/register" [queryParams]="returnUrlParam" class="text-auth-accent font-semibold ml-1 hover:underline">
             Creá una gratis →
           </a>
         </p>

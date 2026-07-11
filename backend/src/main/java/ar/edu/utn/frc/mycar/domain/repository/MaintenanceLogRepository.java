@@ -11,4 +11,7 @@ public interface MaintenanceLogRepository extends JpaRepository<MaintenanceLog, 
     List<MaintenanceLog> findByVehicleIdAndVehicleOwnerEmailOrderByDateDescIdDesc(Long vehicleId, String ownerEmail);
 
     Optional<MaintenanceLog> findByIdAndVehicleIdAndVehicleOwnerEmail(Long id, Long vehicleId, String ownerEmail);
+
+    /** Used by the public transfer preview, where the caller is the prospective buyer, not the current owner. */
+    List<MaintenanceLog> findByVehicleIdOrderByDateDescIdDesc(Long vehicleId);
 }
