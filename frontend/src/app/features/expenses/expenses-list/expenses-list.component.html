@@ -3,14 +3,14 @@
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div class="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
     <h1 class="text-2xl font-bold text-text-primary">Gastos</h1>
-    <div class="flex items-center gap-3">
+    <div class="flex flex-wrap items-center gap-3">
 
       <!-- Vehicle selector -->
-      <div *ngIf="!vehiclesLoading">
+      <div *ngIf="!vehiclesLoading" class="max-w-full">
         <select
           *ngIf="vehicles.length > 1"
           (change)="onVehicleChange($event)"
-          class="form-input text-sm pr-8"
+          class="form-input text-sm pr-8 max-w-full"
         >
           <option value="" [selected]="!selectedVehicle">Todos los vehículos</option>
           <option *ngFor="let v of vehicles" [value]="v.id" [selected]="selectedVehicle?.id === v.id">
@@ -51,9 +51,9 @@
 
   <!-- ── Loading skeleton ───────────────────────────────────────────────── -->
   <div *ngIf="loading" class="space-y-4 animate-pulse">
-    <div class="grid grid-cols-12 gap-4">
-      <div class="col-span-7 h-[300px] bg-surface rounded-md"></div>
-      <div class="col-span-5 h-[300px] bg-surface rounded-md"></div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div class="lg:col-span-7 h-[300px] bg-surface rounded-md"></div>
+      <div class="lg:col-span-5 h-[300px] bg-surface rounded-md"></div>
     </div>
     <div class="h-12 bg-surface rounded-md"></div>
     <div *ngFor="let i of [1,2,3,4]" class="h-[76px] bg-surface rounded-md"></div>
@@ -191,43 +191,45 @@
     <div class="space-y-2" [class.opacity-60]="listLoading">
       <div
         *ngFor="let expense of expenses; trackBy: trackById"
-        class="card flex items-center gap-4 hover:shadow-panel transition-shadow"
+        class="card flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 hover:shadow-panel transition-shadow"
       >
-        <!-- Category icon -->
-        <div
-          class="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-md text-xl"
-          [ngClass]="getCategoryBg(expense.category)"
-        >
-          {{ getCategoryIcon(expense.category) }}
-        </div>
+        <div class="flex items-center gap-4 flex-1 min-w-0">
+          <!-- Category icon -->
+          <div
+            class="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-md text-xl"
+            [ngClass]="getCategoryBg(expense.category)"
+          >
+            {{ getCategoryIcon(expense.category) }}
+          </div>
 
-        <!-- Main info -->
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-semibold text-text-primary truncate">{{ getExpenseTitle(expense) }}</p>
-          <p *ngIf="expense.description" class="text-xs text-text-secondary truncate mt-0.5">{{ expense.description }}</p>
-          <div class="flex items-center gap-2 mt-1.5 flex-wrap">
-            <!-- Status badge -->
-            <span
-              *ngIf="expense.status"
-              class="inline-block px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wide uppercase"
-              [class.bg-success-light]="expense.status === 'VIGENTE'"
-              [class.text-success-dark]="expense.status === 'VIGENTE'"
-              [class.bg-warning-light]="expense.status === 'POR_VENCER'"
-              [class.text-warning-dark]="expense.status === 'POR_VENCER'"
-              [class.bg-danger-light]="expense.status === 'VENCIDO'"
-              [class.text-danger-dark]="expense.status === 'VENCIDO'"
-            >
-              {{ expense.status === 'POR_VENCER' ? 'Por vencer' : expense.status | titlecase }}
-            </span>
-            <span class="text-[11px] text-text-muted">Categoría: {{ getCategoryLabel(expense.category) }}</span>
-            <span *ngIf="expense.kmAtExpense" class="text-[11px] text-text-muted">· {{ expense.kmAtExpense | number }} km</span>
-            <!-- Vehicle badge visible only in all-vehicles mode -->
-            <span *ngIf="allVehiclesMode" class="text-[11px] text-text-muted">· {{ getVehicleLabel(expense.vehicleId) }}</span>
+          <!-- Main info -->
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-text-primary truncate">{{ getExpenseTitle(expense) }}</p>
+            <p *ngIf="expense.description" class="text-xs text-text-secondary truncate mt-0.5">{{ expense.description }}</p>
+            <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+              <!-- Status badge -->
+              <span
+                *ngIf="expense.status"
+                class="inline-block px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wide uppercase"
+                [class.bg-success-light]="expense.status === 'VIGENTE'"
+                [class.text-success-dark]="expense.status === 'VIGENTE'"
+                [class.bg-warning-light]="expense.status === 'POR_VENCER'"
+                [class.text-warning-dark]="expense.status === 'POR_VENCER'"
+                [class.bg-danger-light]="expense.status === 'VENCIDO'"
+                [class.text-danger-dark]="expense.status === 'VENCIDO'"
+              >
+                {{ expense.status === 'POR_VENCER' ? 'Por vencer' : expense.status | titlecase }}
+              </span>
+              <span class="text-[11px] text-text-muted">Categoría: {{ getCategoryLabel(expense.category) }}</span>
+              <span *ngIf="expense.kmAtExpense" class="text-[11px] text-text-muted">· {{ expense.kmAtExpense | number }} km</span>
+              <!-- Vehicle badge visible only in all-vehicles mode -->
+              <span *ngIf="allVehiclesMode" class="text-[11px] text-text-muted">· {{ getVehicleLabel(expense.vehicleId) }}</span>
+            </div>
           </div>
         </div>
 
         <!-- Amount + date -->
-        <div class="flex-shrink-0 text-right">
+        <div class="flex-shrink-0 text-right pl-16 sm:pl-0">
           <p class="text-sm font-bold text-text-primary">${{ expense.amount | number:'1.2-2' }}</p>
           <p class="text-xs text-text-secondary mt-0.5">{{ expense.date | date:'dd MMM, yyyy' }}</p>
         </div>
