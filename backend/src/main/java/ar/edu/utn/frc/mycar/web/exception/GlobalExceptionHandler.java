@@ -1,5 +1,7 @@
 package ar.edu.utn.frc.mycar.web.exception;
 
+import com.openai.errors.OpenAIException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
@@ -13,7 +15,16 @@ import java.util.stream.Collectors;
 
 /** Translates domain exceptions into RFC 9457 {@link ProblemDetail} HTTP responses. */
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
+
+    /** Returns 503 when the OpenAI API call fails (quota/billing, outage, invalid key, etc.). */
+    @ExceptionHandler(OpenAIException.class)
+    public ProblemDetail handleOpenAiFailure(OpenAIException ex) {
+        log.error("OpenAI API call failed", ex);
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
+                "El asistente de IA no está disponible en este momento. Intentá de nuevo más tarde.");
+    }
 
     /** Returns 400 with a map of field-level validation errors. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
