@@ -9,6 +9,12 @@ import java.util.Optional;
 
 public interface DocumentRepository extends JpaRepository<Document, Long> {
 
+    /** Used when purging a user's personal data, to know which physical files to delete before removing the rows. */
+    List<Document> findByVehicleId(Long vehicleId);
+
+    /** Used when purging a user's personal data for a vehicle whose ownership history must be kept. */
+    void deleteByVehicleId(Long vehicleId);
+
     List<Document> findByVehicleIdAndVehicleOwnerEmailAndActiveTrueOrderByTypeAsc(
             Long vehicleId, String ownerEmail);
 

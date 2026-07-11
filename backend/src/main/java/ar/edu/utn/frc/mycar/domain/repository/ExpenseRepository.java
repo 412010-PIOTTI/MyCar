@@ -12,6 +12,9 @@ import java.util.Optional;
 
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
+    /** Used when purging a user's personal data for a vehicle whose ownership history must be kept. */
+    void deleteByVehicleId(Long vehicleId);
+
     List<Expense> findByVehicleIdAndVehicleOwnerEmailOrderByDateDescIdDesc(Long vehicleId, String ownerEmail);
 
     List<Expense> findByVehicleIdAndVehicleOwnerEmailAndCategoryOrderByDateDescIdDesc(

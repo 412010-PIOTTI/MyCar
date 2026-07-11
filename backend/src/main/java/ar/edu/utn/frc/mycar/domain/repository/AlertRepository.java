@@ -9,6 +9,9 @@ import java.util.Optional;
 
 public interface AlertRepository extends JpaRepository<Alert, Long> {
 
+    /** Used when purging a user's personal data for a vehicle whose ownership history must be kept. */
+    void deleteByVehicleId(Long vehicleId);
+
     List<Alert> findByVehicleIdAndVehicleOwnerEmailAndActiveTrueOrderByCreatedAtDesc(
             Long vehicleId, String ownerEmail);
 

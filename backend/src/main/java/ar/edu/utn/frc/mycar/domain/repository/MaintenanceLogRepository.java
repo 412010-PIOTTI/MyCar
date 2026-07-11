@@ -8,6 +8,9 @@ import java.util.Optional;
 
 public interface MaintenanceLogRepository extends JpaRepository<MaintenanceLog, Long> {
 
+    /** Used when purging a user's personal data for a vehicle whose ownership history must be kept. */
+    void deleteByVehicleId(Long vehicleId);
+
     List<MaintenanceLog> findByVehicleIdAndVehicleOwnerEmailOrderByDateDescIdDesc(Long vehicleId, String ownerEmail);
 
     Optional<MaintenanceLog> findByIdAndVehicleIdAndVehicleOwnerEmail(Long id, Long vehicleId, String ownerEmail);
