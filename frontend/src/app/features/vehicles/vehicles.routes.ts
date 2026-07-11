@@ -8,6 +8,9 @@ export const VEHICLES_ROUTES: Routes = [
   },
   {
     path: ':id',
+    data: {
+      help: 'Vas a encontrar el kilometraje, mantenimientos, gastos, documentos y alertas de este vehículo en particular.',
+    },
     loadComponent: () =>
       import('./vehicle-detail/vehicle-detail.component').then((m) => m.VehicleDetailComponent),
   },
