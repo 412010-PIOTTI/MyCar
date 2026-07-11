@@ -166,6 +166,12 @@ public class ExpenseService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public BigDecimal getYearTotalForOwner(String ownerEmail, int year) {
+        BigDecimal total = expenseRepository.sumByOwnerAndYear(ownerEmail, year);
+        return total != null ? total : BigDecimal.ZERO;
+    }
+
     private ExpenseResponse toResponse(Expense expense) {
         return new ExpenseResponse(
                 expense.getId(),

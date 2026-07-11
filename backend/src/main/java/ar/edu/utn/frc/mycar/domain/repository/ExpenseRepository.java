@@ -106,6 +106,16 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
             @Param("ownerEmail") String ownerEmail,
             @Param("year") int year);
 
+    @Query("""
+            SELECT COALESCE(SUM(e.amount), 0)
+            FROM Expense e
+            WHERE e.vehicle.owner.email = :ownerEmail
+              AND YEAR(e.date) = :year
+            """)
+    BigDecimal sumByOwnerAndYear(
+            @Param("ownerEmail") String ownerEmail,
+            @Param("year") int year);
+
     interface CategoryTotal {
         ExpenseCategory getCategory();
         BigDecimal getTotal();
