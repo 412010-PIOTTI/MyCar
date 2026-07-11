@@ -26,8 +26,10 @@
       </app-stat-badge>
       @if (dashboard.exchangeRate; as rate) {
         <app-stat-badge
-          [label]="'Cotización ' + rate.baseCurrency + '/' + rate.targetCurrency"
-          [value]="'$' + (rate.rate | number:'1.2-2')">
+          label="Cotización del día"
+          [value]="'1 ' + rate.baseCurrency + ' = $' + (rate.rate | number:'1.2-2')"
+          [suffix]="rate.targetCurrency"
+          [highlight]="true">
         </app-stat-badge>
       }
     </div>

@@ -6,7 +6,11 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="bg-white rounded-md border border-surface-border shadow-card px-5 py-3 flex flex-col gap-0.5">
+    <div
+      class="rounded-md shadow-card px-5 py-3 flex flex-col gap-0.5"
+      [class]="highlight
+        ? 'bg-info-light border-2 border-secondary'
+        : 'bg-white border border-surface-border'">
       <span class="text-xs font-medium text-text-secondary uppercase tracking-wide whitespace-nowrap">
         {{ label }}
       </span>
@@ -23,4 +27,6 @@ export class StatBadgeComponent {
   @Input() label = '';
   @Input() value: string | number = '';
   @Input() suffix = '';
+  /** Adds an accent border/background so this badge stands out among the others. */
+  @Input() highlight = false;
 }
