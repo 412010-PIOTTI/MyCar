@@ -1,5 +1,6 @@
 import { Component, OnInit, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SectionCardComponent } from '../../shared/components/section-card/section-card.component';
@@ -13,7 +14,7 @@ type FormStatus = 'idle' | 'loading' | 'success' | 'error';
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SectionCardComponent, ToggleComponent, ConfirmDeleteModalComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, SectionCardComponent, ToggleComponent, ConfirmDeleteModalComponent],
   templateUrl: './settings.component.html',
 })
 export class SettingsComponent implements OnInit {
@@ -43,6 +44,10 @@ export class SettingsComponent implements OnInit {
   showDeleteModal = false;
   deleteLoading = false;
   deleteError = '';
+
+  showDeleteDataModal = false;
+  deleteDataLoading = false;
+  deleteDataError = '';
 
   constructor(private fb: FormBuilder, private userService: UserService, private authService: AuthService) {
     this.profileForm = this.fb.group({
@@ -154,6 +159,39 @@ export class SettingsComponent implements OnInit {
             this.deleteError = 'Contraseña incorrecta. Verificá e intentá de nuevo.';
           } else {
             this.deleteError = 'No se pudo procesar la solicitud. Intentá de nuevo.';
+          }
+        },
+      });
+  }
+
+  openDeleteDataModal(): void {
+    this.deleteDataError = '';
+    this.showDeleteDataModal = true;
+  }
+
+  closeDeleteDataModal(): void {
+    this.showDeleteDataModal = false;
+    this.deleteDataError = '';
+  }
+
+  onDeleteDataConfirmed(password: string): void {
+    this.deleteDataLoading = true;
+    this.deleteDataError = '';
+
+    this.userService
+      .deleteMyData(password)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.deleteDataLoading = false;
+          this.authService.clearLocalSession();
+        },
+        error: (err) => {
+          this.deleteDataLoading = false;
+          if (err.status === 400) {
+            this.deleteDataError = 'Contraseña incorrecta. Verificá e intentá de nuevo.';
+          } else {
+            this.deleteDataError = 'No se pudo procesar la solicitud. Intentá de nuevo.';
           }
         },
       });
