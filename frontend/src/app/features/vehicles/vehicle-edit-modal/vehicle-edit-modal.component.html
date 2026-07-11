@@ -28,7 +28,7 @@
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
 
       <!-- Row: Marca / Modelo -->
-      <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
           <label for="edit-brand" class="block text-xs font-medium text-text-secondary mb-1.5">
             Marca <span class="text-danger">*</span>
@@ -64,7 +64,7 @@
       </div>
 
       <!-- Row: Patente / Año -->
-      <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
           <label for="edit-plate" class="block text-xs font-medium text-text-secondary mb-1.5">
             Patente <span class="text-danger">*</span>

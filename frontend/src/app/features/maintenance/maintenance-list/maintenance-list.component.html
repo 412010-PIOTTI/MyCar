@@ -8,14 +8,14 @@
         Registro detallado para tu {{ selectedVehicle.brand }} {{ selectedVehicle.model }} ({{ selectedVehicle.plate }})
       </p>
     </div>
-    <div class="flex items-center gap-3">
+    <div class="flex flex-wrap items-center gap-3">
 
       <!-- Vehicle selector -->
-      <div *ngIf="!vehiclesLoading">
+      <div *ngIf="!vehiclesLoading" class="max-w-full">
         <select
           *ngIf="vehicles.length > 1"
           (change)="onVehicleChange($event)"
-          class="form-input text-sm pr-8"
+          class="form-input text-sm pr-8 max-w-full"
         >
           <option *ngFor="let v of vehicles" [value]="v.id" [selected]="selectedVehicle?.id === v.id">
             {{ v.brand }} {{ v.model }} · {{ v.plate }}
@@ -46,9 +46,9 @@
 
   <!-- ── Loading skeleton ───────────────────────────────────────────────── -->
   <div *ngIf="loading" class="space-y-4 animate-pulse">
-    <div class="grid grid-cols-12 gap-4">
-      <div class="col-span-8 h-[280px] bg-surface rounded-md"></div>
-      <div class="col-span-4 space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+      <div class="md:col-span-8 h-[280px] bg-surface rounded-md"></div>
+      <div class="md:col-span-4 space-y-4">
         <div class="h-[148px] bg-surface rounded-md"></div>
         <div class="h-[120px] bg-surface rounded-md"></div>
       </div>
@@ -88,23 +88,21 @@
     <!-- ── Historial Detallado ─────────────────────────────────────────── -->
     <div class="card overflow-hidden">
       <!-- Table header row -->
-      <div class="flex items-center justify-between px-5 py-4 border-b border-surface-border">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-surface-border">
         <h3 class="text-base font-semibold text-text-primary">Historial Detallado</h3>
-        <div class="flex items-center gap-2">
-          <!-- System filter tabs -->
-          <div class="flex items-center gap-1 overflow-x-auto">
-            <button
-              *ngFor="let tab of tabs"
-              type="button"
-              (click)="selectTab(tab.value)"
-              class="px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors"
-              [ngClass]="activeSystem === tab.value
-                ? 'bg-primary text-text-inverse'
-                : 'text-text-secondary hover:bg-surface'"
-            >
-              {{ tab.label }}
-            </button>
-          </div>
+        <!-- System filter tabs -->
+        <div class="flex items-center gap-1 overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
+          <button
+            *ngFor="let tab of tabs"
+            type="button"
+            (click)="selectTab(tab.value)"
+            class="px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0"
+            [ngClass]="activeSystem === tab.value
+              ? 'bg-primary text-text-inverse'
+              : 'text-text-secondary hover:bg-surface'"
+          >
+            {{ tab.label }}
+          </button>
         </div>
       </div>
 
@@ -130,47 +128,79 @@
 
       <!-- Rows -->
       <div class="divide-y divide-surface-border">
-        <div
-          *ngFor="let log of records; trackBy: trackById"
-          class="grid grid-cols-1 md:grid-cols-[120px_100px_130px_1fr_100px_1fr_44px] gap-3 px-5 py-4 items-center hover:bg-surface/50 transition-colors"
-        >
-          <!-- Fecha -->
-          <span class="text-sm text-text-secondary">{{ formatDate(log.date) }}</span>
+        <div *ngFor="let log of records; trackBy: trackById">
 
-          <!-- KM -->
-          <span class="text-sm text-text-secondary">{{ formatKm(log.kmAtMaintenance) }}</span>
-
-          <!-- Sistema badge -->
-          <span
-            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit"
-            [ngClass]="[getBgClass(log.system), getTextClass(log.system)]"
+          <!-- Mobile card (below md) -->
+          <button
+            type="button"
+            (click)="viewLog(log)"
+            class="md:hidden w-full text-left px-5 py-4 hover:bg-surface/50 transition-colors"
           >
-            {{ getLabel(log.system) }}
-          </span>
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-text-primary">{{ formatDate(log.date) }}</p>
+                <p class="text-xs text-text-muted mt-0.5">{{ formatKm(log.kmAtMaintenance) }}</p>
+              </div>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit flex-shrink-0"
+                [ngClass]="[getBgClass(log.system), getTextClass(log.system)]"
+              >
+                {{ getLabel(log.system) }}
+              </span>
+            </div>
 
-          <!-- Taller -->
-          <span class="text-sm text-text-primary truncate">{{ log.workshop || '—' }}</span>
+            <p class="text-sm text-text-primary mt-2 truncate">{{ log.workshop || '—' }}</p>
+            <p *ngIf="log.description" class="text-xs text-text-secondary mt-1 line-clamp-2">{{ log.description }}</p>
 
-          <!-- Costo -->
-          <span class="text-sm font-semibold text-text-primary">{{ formatCost(log.cost) }}</span>
+            <div class="flex items-center justify-between mt-3">
+              <span class="text-sm font-semibold text-text-primary">{{ formatCost(log.cost) }}</span>
+              <span class="text-xs font-medium text-primary">Ver detalle →</span>
+            </div>
+          </button>
 
-          <!-- Descripción -->
-          <span class="text-xs text-text-secondary truncate max-w-xs">{{ log.description || '—' }}</span>
+          <!-- Desktop/tablet row (md and up) -->
+          <div
+            class="hidden md:grid grid-cols-[120px_100px_130px_1fr_100px_1fr_44px] gap-3 px-5 py-4 items-center hover:bg-surface/50 transition-colors"
+          >
+            <!-- Fecha -->
+            <span class="text-sm text-text-secondary">{{ formatDate(log.date) }}</span>
 
-          <!-- Acción -->
-          <div class="flex justify-end">
-            <button
-              type="button"
-              title="Ver detalle"
-              class="text-primary hover:text-primary/70 transition-colors p-1"
-              (click)="viewLog(log)"
+            <!-- KM -->
+            <span class="text-sm text-text-secondary">{{ formatKm(log.kmAtMaintenance) }}</span>
+
+            <!-- Sistema badge -->
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit"
+              [ngClass]="[getBgClass(log.system), getTextClass(log.system)]"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            </button>
+              {{ getLabel(log.system) }}
+            </span>
+
+            <!-- Taller -->
+            <span class="text-sm text-text-primary truncate">{{ log.workshop || '—' }}</span>
+
+            <!-- Costo -->
+            <span class="text-sm font-semibold text-text-primary">{{ formatCost(log.cost) }}</span>
+
+            <!-- Descripción -->
+            <span class="text-xs text-text-secondary truncate max-w-xs">{{ log.description || '—' }}</span>
+
+            <!-- Acción -->
+            <div class="flex justify-end">
+              <button
+                type="button"
+                title="Ver detalle"
+                class="text-primary hover:text-primary/70 transition-colors p-1"
+                (click)="viewLog(log)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+            </div>
           </div>
+
         </div>
       </div>
 

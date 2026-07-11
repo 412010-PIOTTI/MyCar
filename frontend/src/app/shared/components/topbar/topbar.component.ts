@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Input, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { interval, of, forkJoin, switchMap, startWith, map, catchError } from 'rxjs';
@@ -8,6 +8,7 @@ import { VehicleService } from '../../../core/services/vehicle.service';
 import { AlertService } from '../../../core/services/alert.service';
 import { AlertResponse, UrgencyLevel } from '../../../core/models/alert.model';
 import { Vehicle } from '../../../core/models/vehicle.model';
+import { LogoutConfirmModalComponent } from '../logout-confirm-modal/logout-confirm-modal.component';
 
 interface NotifItem {
   alert: AlertResponse;
@@ -17,21 +18,33 @@ interface NotifItem {
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, LogoutConfirmModalComponent],
   template: `
     <header
-      class="flex items-center justify-between px-6 bg-white border-b border-surface-border flex-shrink-0"
+      class="flex items-center justify-between gap-2 px-4 sm:px-6 bg-white border-b border-surface-border flex-shrink-0"
       style="height: 64px">
 
-      <!-- Page title -->
-      <h1 class="text-lg font-semibold text-text-primary">{{ pageTitle }}</h1>
+      <div class="flex items-center gap-2 min-w-0">
+        <!-- Mobile: open sidebar drawer -->
+        <button
+          (click)="menuToggle.emit()"
+          title="Menú"
+          class="md:hidden p-2 -ml-2 text-text-secondary hover:text-text-primary rounded-md hover:bg-gray-50 transition-colors flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <!-- Page title -->
+        <h1 class="text-lg font-semibold text-text-primary truncate">{{ pageTitle }}</h1>
+      </div>
 
       <!-- Right side -->
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 flex-shrink-0">
 
         <!-- ── Backdrop ────────────────────────────────────────────────── -->
-        @if (showDropdown) {
-          <div class="fixed inset-0 z-40" (click)="closeDropdown()"></div>
+        @if (showDropdown || showUserMenu) {
+          <div class="fixed inset-0 z-40" (click)="closeDropdown(); closeUserMenu()"></div>
         }
 
         <!-- ── Bell + dropdown ────────────────────────────────────────── -->
@@ -62,7 +75,7 @@ interface NotifItem {
 
           <!-- Dropdown panel -->
           @if (showDropdown) {
-            <div class="absolute right-0 top-full mt-2 w-80 bg-white border border-surface-border
+            <div class="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white border border-surface-border
                         rounded-lg shadow-panel overflow-hidden">
 
               <!-- Header -->
@@ -126,32 +139,77 @@ interface NotifItem {
         <!-- ── Help ───────────────────────────────────────────────────── -->
         <button
           title="Ayuda"
-          class="p-2 text-text-secondary hover:text-text-primary rounded-md hover:bg-gray-50 transition-colors">
+          class="hidden sm:block p-2 text-text-secondary hover:text-text-primary rounded-md hover:bg-gray-50 transition-colors">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </button>
 
-        <div class="w-px h-6 bg-surface-border mx-2"></div>
+        <div class="hidden sm:block w-px h-6 bg-surface-border mx-2"></div>
 
-        <!-- ── User avatar ─────────────────────────────────────────────── -->
-        <div class="flex items-center gap-2 pl-1">
-          <div
-            class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 select-none">
-            <span class="text-white text-xs font-semibold">{{ initials }}</span>
-          </div>
-          @if (userName) {
-            <span class="text-sm font-medium text-text-primary">{{ userName }}</span>
+        <!-- ── User avatar + menu ──────────────────────────────────────── -->
+        <div class="relative z-50">
+          <button
+            (click)="toggleUserMenu($event)"
+            class="flex items-center gap-2 pl-1 py-1 pr-2 rounded-md transition-colors"
+            [class]="showUserMenu ? 'bg-blue-50' : 'hover:bg-gray-50'">
+            <div
+              class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 select-none">
+              <span class="text-white text-xs font-semibold">{{ initials }}</span>
+            </div>
+            @if (userName) {
+              <span class="hidden sm:block text-sm font-medium text-text-primary">{{ userName }}</span>
+            }
+            <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <!-- Dropdown panel -->
+          @if (showUserMenu) {
+            <div class="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white border border-surface-border
+                        rounded-lg shadow-panel overflow-hidden py-1">
+
+              <a routerLink="/settings" (click)="closeUserMenu()"
+                 class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-primary hover:bg-gray-50 transition-colors">
+                <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Configuración
+              </a>
+
+              <div class="h-px bg-surface-border my-1"></div>
+
+              <button
+                type="button"
+                (click)="closeUserMenu(); openLogoutModal()"
+                class="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-sm text-danger hover:bg-danger-light transition-colors">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Cerrar sesión
+              </button>
+
+            </div>
           }
         </div>
 
       </div>
     </header>
+
+    <app-logout-confirm-modal
+      [visible]="showLogoutModal"
+      (cancelled)="closeLogoutModal()"
+    />
   `,
 })
 export class TopbarComponent implements OnInit {
   @Input() pageTitle = '';
+  @Output() menuToggle = new EventEmitter<void>();
 
   userName = '';
   initials = '';
@@ -159,6 +217,9 @@ export class TopbarComponent implements OnInit {
   showDropdown = false;
   notifCount   = 0;
   notifications: NotifItem[] = [];
+
+  showUserMenu = false;
+  showLogoutModal = false;
 
   private destroyRef     = inject(DestroyRef);
   private userService    = inject(UserService);
@@ -211,6 +272,23 @@ export class TopbarComponent implements OnInit {
 
   closeDropdown(): void {
     this.showDropdown = false;
+  }
+
+  toggleUserMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+  closeUserMenu(): void {
+    this.showUserMenu = false;
+  }
+
+  openLogoutModal(): void {
+    this.showLogoutModal = true;
+  }
+
+  closeLogoutModal(): void {
+    this.showLogoutModal = false;
   }
 
   private buildInitials(name: string): string {

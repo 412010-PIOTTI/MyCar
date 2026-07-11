@@ -1,32 +1,135 @@
-<div class="flex flex-col items-center justify-center min-h-full p-12 text-center">
+<div class="p-6 space-y-6">
 
-  <div class="max-w-md">
+  @if (loading) {
+    <div class="flex flex-wrap gap-4">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="h-[68px] w-48 bg-white rounded-md border border-surface-border animate-pulse"></div>
+      }
+    </div>
+    <div class="h-64 bg-white rounded-md border border-surface-border animate-pulse"></div>
+  } @else if (loadError) {
+    <div class="bg-white rounded-md border border-surface-border shadow-card p-8 text-center">
+      <p class="text-sm text-danger font-medium">No se pudo cargar el panel de control.</p>
+      <p class="text-xs text-text-muted mt-1">Intentá recargar la página.</p>
+    </div>
+  } @else if (dashboard) {
 
-    <!-- Icon -->
-    <div class="mx-auto mb-6 w-16 h-16 rounded-full bg-info-light flex items-center justify-center">
-      <svg class="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-          d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z
-             M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z
-             M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z
-             M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-      </svg>
+    <!-- KPI row -->
+    <div class="flex flex-wrap gap-4">
+      <app-stat-badge
+        label="Gasto del mes"
+        [value]="'$' + (dashboard.totalExpensesMonth | number:'1.0-0')">
+      </app-stat-badge>
+      <app-stat-badge
+        label="Gasto del año"
+        [value]="'$' + (dashboard.totalExpensesYear | number:'1.0-0')">
+      </app-stat-badge>
+      @if (dashboard.exchangeRate; as rate) {
+        <app-stat-badge
+          label="Cotización del día"
+          [value]="'1 ' + rate.baseCurrency + ' = $' + (rate.rate | number:'1.2-2')"
+          [suffix]="rate.targetCurrency"
+          [highlight]="true">
+        </app-stat-badge>
+      }
     </div>
 
-    <!-- Text -->
-    <h2 class="text-xl font-bold text-text-primary mb-2">
-      Estamos construyendo algo genial
-    </h2>
-    <p class="text-sm text-text-secondary leading-relaxed">
-      Próximamente vas a encontrar estadísticas de tus vehículos, gastos del mes,
-      alertas de mantenimiento y mucho más.
-    </p>
+    <!-- Quick access -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      @for (link of quickLinks; track link.route) {
+        <a
+          [routerLink]="link.route"
+          class="bg-white rounded-md border border-surface-border shadow-card p-4 flex flex-col items-center
+                 gap-2 text-center hover:border-primary hover:shadow-panel transition-all">
+          <span class="text-2xl">{{ link.icon }}</span>
+          <span class="text-xs font-medium text-text-primary">{{ link.label }}</span>
+        </a>
+      }
+    </div>
 
-    <!-- Badge -->
-    <span class="inline-block mt-5 px-3 py-1 bg-info-light text-primary text-xs font-medium rounded-full">
-      Próximamente
-    </span>
+    @if (dashboard.vehicles.length === 0) {
+      <div class="bg-white rounded-md border border-surface-border shadow-card p-12 text-center">
+        <div class="mx-auto mb-6 w-16 h-16 rounded-full bg-info-light flex items-center justify-center">
+          <svg class="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z
+                 M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z
+                 M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z
+                 M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold text-text-primary mb-2">Todavía no tenés vehículos</h2>
+        <p class="text-sm text-text-secondary leading-relaxed mb-5 max-w-md mx-auto">
+          Registrá tu primer vehículo para empezar a ver alertas, mantenimiento y gastos en un solo lugar.
+        </p>
+        <a routerLink="/vehicles" class="btn-primary">
+          + Agregar Vehículo
+        </a>
+      </div>
+    } @else {
+      <div class="space-y-6">
+        @for (vehicle of dashboard.vehicles; track trackByVehicleId($index, vehicle)) {
+          <app-section-card [title]="vehicleLabel(vehicle)" [subtitle]="formatKm(vehicle.currentKm)">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-  </div>
+              <!-- Alerts -->
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-semibold text-text-primary">Alertas activas</h3>
+                  <a routerLink="/alerts" class="text-xs text-primary font-medium hover:underline">Ver todas</a>
+                </div>
+                <div class="space-y-2">
+                  @for (alert of vehicle.activeAlerts.slice(0, 3); track alert.id) {
+                    <div class="flex items-center justify-between gap-2 p-2.5 rounded-md border border-surface-border">
+                      <span class="text-xs text-text-primary truncate">{{ alert.title }}</span>
+                      <app-urgency-badge [level]="alert.urgencyLevel"></app-urgency-badge>
+                    </div>
+                  } @empty {
+                    <p class="text-xs text-text-muted">Sin alertas activas.</p>
+                  }
+                </div>
+              </div>
+
+              <!-- Documents -->
+              <div>
+                <h3 class="text-sm font-semibold text-text-primary mb-3">Documentos clave</h3>
+                <div class="space-y-2">
+                  @for (doc of vehicle.documents; track doc.id) {
+                    <div class="flex items-center justify-between gap-2 p-2.5 rounded-md border border-surface-border">
+                      <span class="text-xs text-text-primary truncate">{{ documentTypeLabel(doc.type) }}</span>
+                      <span
+                        class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full flex-shrink-0"
+                        [class]="documentStatusBadgeClass(doc.status)">
+                        {{ documentStatusLabel(doc.status) }}
+                      </span>
+                    </div>
+                  } @empty {
+                    <p class="text-xs text-text-muted">Sin documentos cargados.</p>
+                  }
+                </div>
+              </div>
+
+              <!-- Last service -->
+              <div>
+                <h3 class="text-sm font-semibold text-text-primary mb-3">Último service</h3>
+                @if (vehicle.lastService; as service) {
+                  <div class="p-3 rounded-md border border-surface-border">
+                    <p class="text-lg font-bold text-text-primary">{{ formatKm(service.kmAtMaintenance) }}</p>
+                    <p class="text-xs text-text-muted mt-1">
+                      {{ formatDate(service.date) }} · {{ service.workshop || service.description || 'Sin detalle' }}
+                    </p>
+                  </div>
+                } @else {
+                  <p class="text-xs text-text-muted">Todavía no hay servicios registrados.</p>
+                }
+              </div>
+
+            </div>
+          </app-section-card>
+        }
+      </div>
+    }
+
+  }
 
 </div>
