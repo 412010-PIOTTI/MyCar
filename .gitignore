@@ -31,6 +31,10 @@ application-local.yml
 backend/uploads/
 uploads/
 
+# Vector store persisted locally (embeddings are billed OpenAI calls, machine-specific)
+backend/data/
+data/
+
 # ===========================
 # ANGULAR / NODE
 # ===========================
